@@ -58,7 +58,7 @@ const ageGroups = [
 
 export default function ServicesForAllAges() {
   return (
-    <section className="bg-background text-foreground py-10 sm:py-16 lg:py-20 transition-colors duration-200">
+    <section className="bg-background text-foreground py-10 sm:py-16 lg:py-20 transition-colors duration-200 mb-0">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-14">

@@ -47,6 +47,9 @@ const registerSchema = z.object({
   email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
   role: z.string().min(1, "Please select a role"),
   password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
+  agreeTerms: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the Terms and Conditions",
+  }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -77,6 +80,7 @@ function RegisterFormContent() {
       email: "",
       role: initialRole.value,
       password: "",
+      agreeTerms: false,
     },
   });
 
@@ -134,7 +138,7 @@ function RegisterFormContent() {
       </Link>
 
       <div className="space-y-3">
-        <Link href="/" className="inline-block group">
+        {/* <Link href="/" className="inline-block group">
           <Image
             src="/icons/Light_Mode.png"
             alt="Cloud Salon Logo"
@@ -149,7 +153,7 @@ function RegisterFormContent() {
             height={44}
             className="h-10 w-auto object-contain hidden dark:block transition-transform group-hover:scale-102"
           />
-        </Link>
+        </Link> */}
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
             Create your account
@@ -315,6 +319,33 @@ function RegisterFormContent() {
           )}
         </div>
 
+        {/* Terms and Conditions Checkbox */}
+        <div className="space-y-1 text-left pt-1">
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              {...register("agreeTerms")}
+              className="w-4 h-4 mt-0.5 rounded border-border text-[#D99722] accent-[#D99722] focus:ring-[#D99722]/20 cursor-pointer shrink-0"
+            />
+            <span className="text-xs text-muted-foreground leading-relaxed">
+              I agree to the{" "}
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#D99722] font-semibold hover:underline"
+              >
+                Terms and Conditions
+              </Link>
+            </span>
+          </label>
+          {errors.agreeTerms && (
+            <p className="text-destructive text-[11px] font-medium">
+              {errors.agreeTerms.message}
+            </p>
+          )}
+        </div>
+
         <button
           type="submit"
           disabled={isSubmitting || isLoading}
@@ -334,6 +365,39 @@ function RegisterFormContent() {
           Log In
         </Link>
       </p>
+
+      {/* Role-Specific Discovery Info Links */}
+      {selectedRole.value === "professional" && (
+        <div className="pt-3 border-t border-border/60 text-center">
+          <p className="text-xs text-muted-foreground">
+            Beauty professional?{" "}
+            <Link
+              href="/for-professionals"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#D99722] font-semibold hover:underline inline-flex items-center gap-0.5"
+            >
+              See how it works &rarr;
+            </Link>
+          </p>
+        </div>
+      )}
+
+      {selectedRole.value === "business" && (
+        <div className="pt-3 border-t border-border/60 text-center">
+          <p className="text-xs text-muted-foreground">
+            Salon owner?{" "}
+            <Link
+              href="/for-businesses"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#D99722] font-semibold hover:underline inline-flex items-center gap-0.5"
+            >
+              See how it works &rarr;
+            </Link>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

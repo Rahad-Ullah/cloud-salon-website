@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Menu, X, Compass, Briefcase, Building2, HelpCircle, Info, FileText, Globe, User, Scissors, ChevronRight, Sparkles, Grid, LayoutDashboard, Calendar, Settings, Heart, LogOut, Armchair } from "lucide-react";
+import { ChevronDown, Menu, X, Compass, Briefcase, Building2, HelpCircle, Info, FileText, Globe, User, Scissors, ChevronRight, Sparkles, Grid, LayoutDashboard, Calendar, Settings, Heart, LogOut, Armchair, Home as HomeIcon } from "lucide-react";
 import Button from "./Button";
 import ThemeToggle from "./theme-toggle";
 import { Combobox } from "@/components/ui/combobox";
@@ -140,21 +140,18 @@ export default function Navbar() {
     pathname === "/discover" ||
     pathname.startsWith("/discover/") ||
     pathname.startsWith("/search");
-  const isProActive = pathname === "/for-professionals" || pathname.startsWith("/for-professionals/");
-  const isBusinessActive = pathname === "/for-businesses" || pathname.startsWith("/for-businesses/");
   const isHowItWorksActive = pathname === "/how-it-works" || pathname.startsWith("/how-it-works/");
   const isAboutActive = pathname === "/about" || pathname.startsWith("/about/");
-  const isFaqActive = pathname === "/faq" || pathname.startsWith("/faq/");
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-[#121214] border-b border-border/20 transition-colors duration-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-4 xl:px-6 2xl:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
 
           {/* Logo with Smooth Scroll & Route Transition */}
           <Link
             href="/"
-            className={`relative z-50 flex items-center shrink-0 group transition-all duration-300 ease-in-out ${isExpandedLogo ? "-mb-6 sm:-mb-8 lg:-mb-10 top-1" : "mb-0 top-0"
+            className={`relative z-50 flex items-center shrink-0 group transition-all duration-300 ease-in-out ${isExpandedLogo ? "-mb-6 sm:-mb-8 lg:-mb-6 xl:-mb-8 2xl:-mb-10 top-1" : "mb-0 top-0"
               }`}
           >
             <Image
@@ -162,7 +159,7 @@ export default function Navbar() {
               alt="The Cloud Salon"
               width={1000}
               height={1000}
-              className={`w-auto block dark:hidden object-contain transition-all duration-300 ease-in-out group-hover:scale-105 ${isExpandedLogo ? "h-16 sm:h-20 lg:h-24" : "h-9 sm:h-10"
+              className={`w-auto block dark:hidden object-contain transition-all duration-300 ease-in-out group-hover:scale-105 ${isExpandedLogo ? "h-16 sm:h-20 lg:h-14 xl:h-16 2xl:h-24" : "h-9 sm:h-10"
                 }`}
               priority
             />
@@ -171,18 +168,18 @@ export default function Navbar() {
               alt="The Cloud Salon"
               width={1000}
               height={1000}
-              className={`w-auto hidden dark:block object-contain transition-all duration-300 ease-in-out group-hover:scale-105 ${isExpandedLogo ? "h-16 sm:h-20 lg:h-24" : "h-9 sm:h-10"
+              className={`w-auto hidden dark:block object-contain transition-all duration-300 ease-in-out group-hover:scale-105 ${isExpandedLogo ? "h-16 sm:h-20 lg:h-14 xl:h-16 2xl:h-24" : "h-9 sm:h-10"
                 }`}
               priority
             />
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-xs sm:text-sm font-medium text-muted-foreground">
+          <nav className="hidden lg:flex items-center gap-2 lg:gap-2.5 xl:gap-3.5 2xl:gap-7 text-xs 2xl:text-sm font-medium text-muted-foreground whitespace-nowrap">
             {/* Home Link */}
             <Link
               href="/"
-              className={`group relative py-2 transition-colors ${pathname === "/"
+              className={`group relative py-2 transition-colors whitespace-nowrap ${pathname === "/"
                 ? "text-foreground font-semibold"
                 : "hover:text-foreground"
                 }`}
@@ -197,7 +194,7 @@ export default function Navbar() {
             {/* Services Link */}
             <Link
               href="/services"
-              className={`group relative py-2 transition-colors ${isServicesActive
+              className={`group relative py-2 transition-colors whitespace-nowrap ${isServicesActive
                 ? "text-foreground font-semibold"
                 : "hover:text-foreground"
                 }`}
@@ -212,7 +209,7 @@ export default function Navbar() {
             {/* Professionals */}
             <Link
               href="/professionals"
-              className={`group relative py-2 transition-colors ${isProfessionalsActive ? "text-foreground font-semibold" : "hover:text-foreground"
+              className={`group relative py-2 transition-colors whitespace-nowrap ${isProfessionalsActive ? "text-foreground font-semibold" : "hover:text-foreground"
                 }`}
             >
               <span>Professionals</span>
@@ -225,7 +222,7 @@ export default function Navbar() {
             {/* Salons */}
             <Link
               href="/salons"
-              className={`group relative py-2 transition-colors ${isSalonsActive ? "text-foreground font-semibold" : "hover:text-foreground"
+              className={`group relative py-2 transition-colors whitespace-nowrap ${isSalonsActive ? "text-foreground font-semibold" : "hover:text-foreground"
                 }`}
             >
               <span>Salons</span>
@@ -238,7 +235,7 @@ export default function Navbar() {
             {/* Workspaces */}
             <Link
               href="/workspaces"
-              className={`group relative py-2 transition-colors ${isWorkspacesActive ? "text-foreground font-semibold" : "hover:text-foreground"
+              className={`group relative py-2 transition-colors whitespace-nowrap ${isWorkspacesActive ? "text-foreground font-semibold" : "hover:text-foreground"
                 }`}
             >
               <span>Workspaces</span>
@@ -251,7 +248,7 @@ export default function Navbar() {
             {/* How it Works */}
             <Link
               href="/how-it-works"
-              className={`group relative py-2 transition-colors ${isHowItWorksActive ? "text-foreground font-semibold" : "hover:text-foreground"
+              className={`group relative py-2 transition-colors whitespace-nowrap ${isHowItWorksActive ? "text-foreground font-semibold" : "hover:text-foreground"
                 }`}
             >
               <span>How it Works</span>
@@ -264,7 +261,7 @@ export default function Navbar() {
             {/* About Us */}
             <Link
               href="/about"
-              className={`group relative py-2 transition-colors ${isAboutActive ? "text-foreground font-semibold" : "hover:text-foreground"
+              className={`group relative py-2 transition-colors whitespace-nowrap ${isAboutActive ? "text-foreground font-semibold" : "hover:text-foreground"
                 }`}
             >
               <span>About Us</span>
@@ -276,16 +273,16 @@ export default function Navbar() {
           </nav>
 
           {/* Action Buttons & Language Switcher */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2 2xl:gap-2.5">
             {/* Theme Toggle */}
-            <ThemeToggle className="h-10 w-10 rounded-sm border-border bg-card hover:bg-accent shadow-2xs shrink-0" />
+            <ThemeToggle className="h-9 w-9 2xl:h-10 2xl:w-10 rounded-sm border-border bg-card hover:bg-accent shadow-2xs shrink-0" />
 
             {/* Language Selector Combobox */}
             <Combobox
               options={languageOptions}
               value={currentLangCode}
               onChange={changeLanguage}
-              triggerClassName="h-10 px-3 rounded-sm border-border bg-card hover:bg-accent text-xs font-semibold text-foreground shadow-2xs notranslate"
+              triggerClassName="h-9 px-2 xl:px-2.5 2xl:h-10 2xl:px-3 w-[88px] xl:w-[94px] 2xl:w-[105px] rounded-sm border-border bg-card hover:bg-accent text-xs font-semibold text-foreground shadow-2xs notranslate shrink-0"
               contentClassName="notranslate"
               labelClassName="text-xs font-semibold notranslate"
               align="end"
@@ -294,19 +291,19 @@ export default function Navbar() {
 
             {/* Desktop Actions */}
             {isAuthChecking ? (
-              <div className="h-10 px-3 rounded-sm bg-card border border-border/80 shadow-2xs flex items-center gap-2 animate-pulse w-32 shrink-0">
-                <div className="w-6 h-6 rounded-md bg-muted/80 shrink-0" />
-                <div className="h-3.5 w-16 bg-muted/80 rounded-sm flex-1" />
+              <div className="h-9 px-2 xl:px-2.5 2xl:h-10 2xl:px-3 rounded-sm bg-card border border-border/80 shadow-2xs flex items-center gap-2 animate-pulse w-24 xl:w-28 2xl:w-32 shrink-0">
+                <div className="w-5 h-5 2xl:w-6 2xl:h-6 rounded-md bg-muted/80 shrink-0" />
+                <div className="h-3.5 w-14 xl:w-16 bg-muted/80 rounded-sm flex-1" />
               </div>
             ) : isLoggedIn ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 xl:gap-2">
                 <NotificationDropdown userRole={userRole} />
 
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setProfileOpen(!profileOpen)}
-                  className="h-10 px-3 rounded-sm bg-card border border-border hover:bg-accent hover:border-primary/40 text-foreground text-xs font-semibold shadow-2xs flex items-center gap-2 cursor-pointer transition-all active:scale-95 relative z-50"
+                  className="h-9 px-2 xl:px-2.5 2xl:h-10 2xl:px-3 rounded-sm bg-card border border-border hover:bg-accent hover:border-primary/40 text-foreground text-xs font-semibold shadow-2xs flex items-center gap-1.5 xl:gap-2 cursor-pointer transition-all active:scale-95 relative z-50 shrink-0"
                 >
                   <div className="w-6 h-6 rounded-md bg-[#D99722] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs overflow-hidden relative">
                     {userImage ? (
@@ -317,7 +314,7 @@ export default function Navbar() {
                       <User className="w-3.5 h-3.5 text-white" />
                     )}
                   </div>
-                  <span className="max-w-[120px] truncate font-bold text-xs">
+                  <span className="max-w-[80px] xl:max-w-[100px] 2xl:max-w-[120px] truncate font-bold text-xs">
                     {displayName}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${profileOpen ? "rotate-180 text-primary" : ""}`} />
@@ -479,7 +476,7 @@ export default function Navbar() {
                 {/* Login Button */}
                 <Link
                   href="/login"
-                  className="h-10 px-4 rounded-sm border border-border bg-card hover:bg-accent hover:text-[#D99722] text-foreground text-xs font-semibold shadow-2xs flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                  className="h-9 px-2.5 xl:px-3 2xl:h-10 2xl:px-4 rounded-sm border border-border bg-card hover:bg-accent hover:text-[#D99722] text-foreground text-xs font-semibold shadow-2xs flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
                 >
                   Login
                 </Link>
@@ -487,16 +484,16 @@ export default function Navbar() {
                 {/* Sign Up Button */}
                 <Link
                   href="/register"
-                  className="h-10 px-4 rounded-sm border border-border bg-card hover:bg-accent hover:text-[#D99722] text-foreground text-xs font-semibold shadow-2xs flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                  className="h-9 px-2.5 xl:px-3 2xl:h-10 2xl:px-4 rounded-sm border border-border bg-card hover:bg-accent hover:text-[#D99722] text-foreground text-xs font-semibold shadow-2xs flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
                 >
-                  Sign Up
+                  GET STARTED
                 </Link>
             </>
           )}
           </div>
 
           {/* Mobile Menu Button & Mobile Language Toggle */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-2">
             <Combobox
               options={[
                 { value: "en", label: "EN" },
@@ -539,10 +536,24 @@ export default function Navbar() {
           />
 
           {/* Mobile Sheet Container */}
-          <div className="relative z-50 md:hidden bg-background border-b border-border shadow-2xl px-4 sm:px-5 pt-3 pb-8 space-y-2.5 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto animate-in slide-in-from-top-6 duration-300 ease-out">
+          <div className="relative z-50 lg:hidden bg-background border-b border-border shadow-2xl px-4 sm:px-5 pt-3 pb-8 space-y-2.5 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto animate-in slide-in-from-top-6 duration-300 ease-out">
             {/* Sheet Handle Indicator */}
             <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-3" />
 
+            {/* 1. Home */}
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all active:scale-[0.98] ${isHome
+                ? "bg-accent text-primary font-semibold border-l-4 border-primary shadow-xs"
+                : "text-foreground hover:bg-accent/60"
+                }`}
+            >
+              <HomeIcon className={`w-5 h-5 ${isHome ? "text-primary" : "text-muted-foreground"}`} />
+              <span>Home</span>
+            </Link>
+
+            {/* 2. Services */}
             <Link
               href="/services"
               onClick={() => setMobileMenuOpen(false)}
@@ -555,6 +566,7 @@ export default function Navbar() {
               <span>Services</span>
             </Link>
 
+            {/* 3. Professionals */}
             <Link
               href="/professionals"
               onClick={() => setMobileMenuOpen(false)}
@@ -567,6 +579,7 @@ export default function Navbar() {
               <span>Professionals</span>
             </Link>
 
+            {/* 4. Salons */}
             <Link
               href="/salons"
               onClick={() => setMobileMenuOpen(false)}
@@ -579,6 +592,7 @@ export default function Navbar() {
               <span>Salons</span>
             </Link>
 
+            {/* 5. Workspaces */}
             <Link
               href="/workspaces"
               onClick={() => setMobileMenuOpen(false)}
@@ -591,30 +605,7 @@ export default function Navbar() {
               <span>Workspaces</span>
             </Link>
 
-            <Link
-              href="/for-professionals"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all active:scale-[0.98] ${isProActive
-                ? "bg-accent text-primary font-semibold border-l-4 border-primary shadow-xs"
-                : "text-foreground hover:bg-accent/60"
-                }`}
-            >
-              <Briefcase className={`w-5 h-5 ${isProActive ? "text-primary" : "text-muted-foreground"}`} />
-              <span>For Professionals</span>
-            </Link>
-
-            <Link
-              href="/for-businesses"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all active:scale-[0.98] ${isBusinessActive
-                ? "bg-accent text-primary font-semibold border-l-4 border-primary shadow-xs"
-                : "text-foreground hover:bg-accent/60"
-                }`}
-            >
-              <Building2 className={`w-5 h-5 ${isBusinessActive ? "text-primary" : "text-muted-foreground"}`} />
-              <span>For Businesses</span>
-            </Link>
-
+            {/* 6. How it Works */}
             <Link
               href="/how-it-works"
               onClick={() => setMobileMenuOpen(false)}
@@ -627,6 +618,7 @@ export default function Navbar() {
               <span>How it Works</span>
             </Link>
 
+            {/* 7. About Us */}
             <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}
@@ -637,18 +629,6 @@ export default function Navbar() {
             >
               <Info className={`w-5 h-5 ${isAboutActive ? "text-primary" : "text-muted-foreground"}`} />
               <span>About Us</span>
-            </Link>
-
-            <Link
-              href="/faq"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all active:scale-[0.98] ${isFaqActive
-                ? "bg-accent text-primary font-semibold border-l-4 border-primary shadow-xs"
-                : "text-foreground hover:bg-accent/60"
-                }`}
-            >
-              <HelpCircle className={`w-5 h-5 ${isFaqActive ? "text-primary" : "text-muted-foreground"}`} />
-              <span>FAQs</span>
             </Link>
 
             {/* Mobile Sign Up / Account Options */}
@@ -725,11 +705,11 @@ export default function Navbar() {
                       size="md"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Sign Up
+                      GET STARTED
                     </Button>
                   </div>
 
-                  <div className="px-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  {/* <div className="px-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Sign Up As
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -757,7 +737,7 @@ export default function Navbar() {
                       <Building2 className="w-4 h-4 text-primary" />
                       <span>Business / Salon Owner</span>
                     </Link>
-                  </div>
+                  </div> */}
                 </>
               )}
             </div>

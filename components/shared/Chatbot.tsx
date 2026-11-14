@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useSelector } from "react-redux";
+import { TbMessageChatbot } from "react-icons/tb";
 import {
   Bot,
   X,
@@ -89,59 +90,6 @@ interface RootAuthState {
       name?: string;
     };
   };
-}
-
-function PremiumChatbotIcon({ className = "w-7 h-7 sm:w-8 sm:h-8" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      {/* Headband / Audio Arc */}
-      <path
-        d="M5 14C5 7.5 10.5 4.5 18 4.5C25.5 4.5 31 7.5 31 14"
-        stroke="white"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-
-      {/* Antenna */}
-      <path d="M18 5.5V2" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
-      <circle cx="18" cy="2" r="2.2" fill="#FFE082" />
-
-      {/* Ear Headset Cushions */}
-      <rect x="2" y="11.5" width="3.5" height="8.5" rx="1.75" fill="white" />
-      <rect x="30.5" y="11.5" width="3.5" height="8.5" rx="1.75" fill="white" />
-
-      {/* Robot Head Body */}
-      <rect x="5.5" y="8" width="25" height="19.5" rx="7.5" fill="white" />
-
-      {/* Visor Screen */}
-      <rect x="8.5" y="11" width="19" height="13.5" rx="5" fill="#1C1A17" />
-
-      {/* Glowing Happy Eyes */}
-      <ellipse cx="14" cy="16.5" rx="2" ry="2.6" fill="#F5C042" />
-      <circle cx="14.6" cy="15.7" r="0.8" fill="white" />
-      <ellipse cx="22" cy="16.5" rx="2" ry="2.6" fill="#F5C042" />
-      <circle cx="22.6" cy="15.7" r="0.8" fill="white" />
-
-      {/* Friendly Smile */}
-      <path
-        d="M15.8 20.8C16.8 22 19.2 22 20.2 20.8"
-        stroke="#F5C042"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-
-      {/* Base Collar */}
-      <path
-        d="M13.5 28.5C13.5 28 15 27.5 18 27.5C21 27.5 22.5 28 22.5 28.5L24 32H12L13.5 28.5Z"
-        fill="white"
-      />
-    </svg>
-  );
 }
 
 export default function Chatbot() {
@@ -900,7 +848,7 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Floating Golden Round Chat Trigger Button */}
+      {/* Floating Golden Chat Trigger Button */}
       <button
         type="button"
         onClick={() => {
@@ -909,29 +857,35 @@ export default function Chatbot() {
             return !prev;
           });
         }}
-        aria-label={isOpen ? "Close Salon AI Chat" : "Open Salon AI Chat"}
-        title={isOpen ? "Close AI Chatbot" : "Chat with Salon AI Assistant"}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#B87D1B] via-[#D99722] to-[#F1B638] hover:brightness-105 active:scale-95 transition-all shadow-[0_8px_25px_-4px_rgba(217,151,34,0.55)] flex items-center justify-center cursor-pointer group"
+        aria-label={isOpen ? "Close Salon AI Chat" : "Chat with Assistant"}
+        title={isOpen ? "Close AI Chatbot" : "Chat with Assistant"}
+        className={`fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50 bg-gradient-to-tr from-[#B87D1B] via-[#D99722] to-[#F1B638] hover:brightness-105 active:scale-95 transition-all shadow-[0_6px_20px_-3px_rgba(217,151,34,0.45)] hover:shadow-[0_8px_25px_-3px_rgba(217,151,34,0.55)] flex items-center justify-center cursor-pointer group ${
+          isOpen
+            ? "w-9.5 h-9.5 sm:w-11 sm:h-11 rounded-full"
+            : "h-9.5 sm:h-11 px-3 sm:px-4 rounded-full gap-1.5 sm:gap-2"
+        }`}
       >
-        {/* Soft Ambient Pulse Ring when closed */}
+        {/* Soft Ambient Pulse Ring when closed (light and subtle) */}
         {!isOpen && (
-          <span className="absolute inset-0 rounded-full bg-[#D99722]/35 animate-ping pointer-events-none -z-10 [animation-duration:3s]" />
+          <span className="absolute inset-0 rounded-full bg-[#D99722]/15 animate-ping pointer-events-none -z-10 [animation-duration:4s]" />
         )}
 
         {isOpen ? (
-          <X className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:scale-110 transition-transform stroke-[2.5]" />
+          <X className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white group-hover:scale-110 transition-transform stroke-[2.5]" />
         ) : (
-          <div className="relative flex items-center justify-center">
-            <PremiumChatbotIcon className="w-7 h-7 sm:w-8 sm:h-8 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm" />
-            {/* <span className="absolute -top-2.5 -right-2.5 px-1.5 py-0.5 rounded-full bg-[#18181B] text-white text-[9px] font-extrabold border border-[#D99722]/70 shadow-md uppercase tracking-wider flex items-center gap-0.5 pointer-events-none">
-              <Sparkles className="w-2.5 h-2.5 text-[#D99722]" />
-              <span>AI</span>
-            </span> */}
-          </div>
+          <>
+            <div className="relative flex items-center justify-center shrink-0">
+              <TbMessageChatbot className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white drop-shadow-xs group-hover:scale-110 transition-transform duration-300" />
+            </div>
+
+            <span className="text-xs sm:text-[13px] font-semibold text-white tracking-wide whitespace-nowrap drop-shadow-xs">
+              Ask Assistant
+            </span>
+          </>
         )}
 
         {unread && !isOpen && (
-          <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-[#E53E3E] rounded-full border-2 border-white dark:border-[#121214] shadow-xs animate-pulse" />
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#E53E3E] rounded-full border-2 border-white dark:border-[#121214] shadow-xs animate-pulse" />
         )}
       </button>
     </>

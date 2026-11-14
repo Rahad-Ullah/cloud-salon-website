@@ -157,7 +157,7 @@ function LoginFormContent() {
   return (
     <div className="max-w-md mx-auto w-full space-y-6">
       <div className="space-y-3">
-        <Link href="/" className="inline-block group">
+        {/* <Link href="/" className="inline-block group">
           <Image
             src="/icons/Light_Mode.png"
             alt="Cloud Salon Logo"
@@ -172,7 +172,7 @@ function LoginFormContent() {
             height={44}
             className="h-10 w-auto object-contain hidden dark:block transition-transform group-hover:scale-102"
           />
-        </Link>
+        </Link> */}
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
             Welcome back

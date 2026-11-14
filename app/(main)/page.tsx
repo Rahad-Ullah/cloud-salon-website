@@ -30,7 +30,7 @@ export default function HomePage() {
       {/* <StatsTicker /> */}
 
       {/* Landing Page Content Sections */}
-      <div className="space-y-14 sm:space-y-20 pt-10 pb-16">
+      <div className="space-y-14 sm:space-y-20 pt-10">
         {/* 2. Our Services */}
         <CategoriesSection />
 
@@ -56,7 +56,7 @@ export default function HomePage() {
         <GetStartedCta />
 
         {/* 10. Join as a professional */}
-        <ForProfessionalsSection />
+        {/* <ForProfessionalsSection /> */}
 
         {/* ========================================================
             OTHER SECTIONS (Commented out per request)

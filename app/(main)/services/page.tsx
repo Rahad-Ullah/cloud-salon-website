@@ -34,6 +34,11 @@ export default function ServicesPage() {
   const [selectedCategoryPill, setSelectedCategoryPill] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const gridTopRef = useRef<HTMLDivElement>(null);
+  const pillsScrollRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
 
   const { data: categoriesRes, isLoading } = useGetAllCategoryQuery({});
 
@@ -135,6 +140,52 @@ export default function ServicesPage() {
     router.push(queryStr ? `/professionals?${queryStr}` : "/professionals");
   };
 
+  const handlePillsScrollPrev = () => {
+    if (pillsScrollRef.current) {
+      pillsScrollRef.current.scrollBy({ left: -260, behavior: "smooth" });
+    }
+  };
+
+  const handlePillsScrollNext = () => {
+    if (pillsScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = pillsScrollRef.current;
+      if (scrollLeft + clientWidth >= scrollWidth - 10) {
+        pillsScrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        pillsScrollRef.current.scrollBy({ left: 260, behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!pillsScrollRef.current) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.pageX - pillsScrollRef.current.offsetLeft;
+    scrollLeftRef.current = pillsScrollRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !pillsScrollRef.current) return;
+    const x = e.pageX - pillsScrollRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    if (Math.abs(walk) > 4) {
+      hasDraggedRef.current = true;
+    }
+    pillsScrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleWheelScroll = (e: React.WheelEvent) => {
+    if (!pillsScrollRef.current) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      pillsScrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-200 pb-20 select-none">
       {/* =========================================================================
@@ -144,8 +195,10 @@ export default function ServicesPage() {
         {/* Subtle Animated Ambient Glow in Background */}
         <div className="absolute top-1/4 left-[-5%] w-96 h-96 bg-[#D99722]/8 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
 
-        {/* Desktop Golden Arc Frame Pinned to Viewport Right-0 */}
-        <div className="hidden lg:flex absolute top-0 lg:h-[380px] 2xl:h-[542px] -mt-1 right-0 w-[calc(52vw)] xl:w-[calc(55vw)] rounded-l-full border-l-[25px] border-t-[3.5px] border-b-[3.5px] border-[#D99722] shadow-2xl overflow-hidden bg-[#121110] items-stretch z-0">
+        {/* Hero Content Wrapper with Max Width for Large Displays */}
+        <div className="w-full max-w-[1920px] mx-auto relative">
+          {/* Desktop Golden Arc Frame Pinned to Viewport Right-0 */}
+          <div className="hidden lg:flex absolute top-0 lg:h-[380px] 2xl:h-[542px] -mt-1 right-0 w-[calc(52vw)] xl:w-[calc(55vw)] 2xl:w-[55%] max-w-[1056px] rounded-l-full border-l-[25px] border-t-[3.5px] border-b-[3.5px] border-[#D99722] shadow-2xl overflow-hidden bg-[#121110] items-stretch z-0">
           <div className="w-full relative overflow-hidden h-full">
             <motion.div
               animate={{ scale: [1, 1.035, 1] }}
@@ -167,7 +220,7 @@ export default function ServicesPage() {
         {/* Main Grid Container for Left Content */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-[380px] sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-8 lg:py-0">
-            <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 space-y-2.5 lg:space-y-2 2xl:space-y-3.5 text-left relative z-20">
+            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 space-y-2.5 lg:space-y-2 2xl:space-y-3.5 text-left relative z-20">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Link
@@ -199,7 +252,7 @@ export default function ServicesPage() {
               </div>
 
               {/* Search Bar */}
-              <div className="pt-1.5 w-full max-w-2xl">
+              <div className="pt-1.5 w-full max-w-lg">
                 <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all">
                     <Search className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -227,21 +280,22 @@ export default function ServicesPage() {
                     )}
                   </div>
 
-                  <button
+                  {/* <button
                     type="button"
                     onClick={handleFindProfessionalsSubmit}
                     className="px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
                   >
                     <span>Find Professionals</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
 
             {/* Spacer for Right Column on Desktop Grid */}
-            <div className="hidden lg:block lg:col-span-6 xl:col-span-6 2xl:col-span-6" />
+            <div className="hidden lg:block lg:col-span-7 xl:col-span-7 2xl:col-span-7" />
           </div>
+        </div>
         </div>
       </section>
 
@@ -251,7 +305,7 @@ export default function ServicesPage() {
       <section ref={gridTopRef} className="container mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12 scroll-mt-24">
         {/* Section Header with Category Filter Pills */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8 pb-4 border-b border-border/50">
-          <div>
+          <div className="shrink-0">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Explore Services
             </h2>
@@ -260,26 +314,58 @@ export default function ServicesPage() {
             </p>
           </div>
 
-          {/* Dynamic Filter Pills */}
+          {/* Dynamic Filter Pills Carousel */}
           {categoryPills.length > 1 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none max-w-full">
-              {categoryPills.map((pill) => {
-                const isActive = selectedCategoryPill === pill.id;
-                return (
-                  <button
-                    key={pill.id}
-                    type="button"
-                    onClick={() => handleCategoryPillSelect(pill.id)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer border ${
-                      isActive
-                        ? "bg-[#D99722] text-white border-[#D99722] shadow-sm scale-102"
-                        : "bg-card hover:bg-accent border-border text-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {pill.name}
-                  </button>
-                );
-              })}
+            <div className="flex-1 min-w-0 max-w-full lg:max-w-2xl xl:max-w-3xl flex items-center gap-1.5 relative">
+              <button
+                type="button"
+                onClick={handlePillsScrollPrev}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 transition-all cursor-pointer shadow-xs active:scale-95"
+                aria-label="Scroll categories left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div
+                ref={pillsScrollRef}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={handleMouseUpOrLeave}
+                onWheel={handleWheelScroll}
+                className="flex-1 flex items-center gap-2 overflow-x-auto py-1 scrollbar-none scroll-smooth cursor-grab active:cursor-grabbing select-none"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {categoryPills.map((pill) => {
+                  const isActive = selectedCategoryPill === pill.id;
+                  return (
+                    <button
+                      key={pill.id}
+                      type="button"
+                      onClick={() => {
+                        if (hasDraggedRef.current) return;
+                        handleCategoryPillSelect(pill.id);
+                      }}
+                      className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer border whitespace-nowrap ${
+                        isActive
+                          ? "bg-[#D99722] text-white border-[#D99722] shadow-sm scale-102"
+                          : "bg-card hover:bg-accent border-border text-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {pill.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePillsScrollNext}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 transition-all cursor-pointer shadow-xs active:scale-95"
+                aria-label="Scroll categories right"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>

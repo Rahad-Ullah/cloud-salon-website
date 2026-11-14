@@ -49,13 +49,15 @@ export default function Hero() {
       {/* Subtle Animated Ambient Glow in Background */}
       <div className="absolute top-1/4 left-[-5%] w-96 h-96 bg-[#D99722]/8 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
 
-      {/* Desktop Golden Arc Frame Pinned to Viewport Right-0 (Fills Red Box Completely to Right Edge) */}
-      <motion.div
-        // initial={{ opacity: 0, x: 50 }}
-        // animate={{ opacity: 1, x: 0 }}
-        // transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as const }}
-        className="hidden lg:flex absolute top-0 lg:h-[380px] 2xl:h-[542px] -mt-1 right-0 w-[calc(52vw)] xl:w-[calc(55vw)] rounded-l-full border-l-[25px] border-t-[3.5px] border-b-[3.5px] border-[#D99722] shadow-2xl overflow-hidden bg-[#121110] items-stretch z-0"
-      >
+      {/* Hero Content Wrapper with Max Width for Large Displays */}
+      <div className="w-full max-w-[1920px] mx-auto relative">
+        {/* Desktop Golden Arc Frame Pinned to Viewport Right-0 (Fills Red Box Completely to Right Edge) */}
+        <motion.div
+          // initial={{ opacity: 0, x: 50 }}
+          // animate={{ opacity: 1, x: 0 }}
+          // transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as const }}
+          className="hidden lg:flex absolute top-0 lg:h-[380px] 2xl:h-[542px] -mt-1 right-0 w-[calc(52vw)] xl:w-[calc(55vw)] 2xl:w-[55%] max-w-[1056px] rounded-l-full border-l-[25px] border-t-[3.5px] border-b-[3.5px] border-[#D99722] shadow-2xl overflow-hidden bg-[#121110] items-stretch z-0"
+        >
         {/* Beauty Model Background Image with Smooth Subtle Float */}
         <div className="w-full relative overflow-hidden h-full">
           <motion.div
@@ -89,12 +91,12 @@ export default function Hero() {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 space-y-2 lg:space-y-2 2xl:space-y-3 text-left relative z-20"
+            className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 space-y-2 lg:space-y-2 2xl:space-y-2 text-left relative z-20"
           >
             {/* Top Golden Subtitle */}
             <motion.div
               variants={fadeInUp}
-              className="flex items-center mt-1 sm:mt-2 lg:mt-2.5 gap-2 text-[10px] sm:text-xs lg:text-[10px] 2xl:text-xs font-bold text-[#D99722] uppercase tracking-[0.18em]"
+              className="flex items-center mt-1 sm:mt-2 lg:mt-13 gap-2 text-[10px] sm:text-xs lg:text-[10px] 2xl:text-xs font-bold text-[#D99722] uppercase tracking-[0.18em]"
             >
               <motion.span
                 initial={{ width: 0 }}
@@ -106,7 +108,7 @@ export default function Hero() {
             </motion.div>
 
             {/* Main Editorial Headline */}
-            <motion.div variants={fadeInUp} className="space-y-1.5 lg:space-y-1 2xl:space-y-2">
+            <motion.div variants={fadeInUp} className="space-y-1.5 lg:space-y-0.5 2xl:space-y-0.5">
               <h1 className="font-extrabold text-3xl sm:text-4xl lg:text-3xl xl:text-4xl 2xl:text-6xl leading-[1.1] tracking-tight text-[#222222] dark:text-white">
                 Salon Services, <br />
                 <span className="text-[#D99722]">Your Choice.</span>
@@ -142,7 +144,7 @@ export default function Hero() {
             </motion.div>
 
             {/* Action Buttons */}
-            <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-0.5 lg:pt-0.5 2xl:pt-1">
+            <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-2.5 sm:gap-3 pb-2 lg:pt-0 2xl:pt-0">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link
                   href="/professionals"
@@ -163,7 +165,7 @@ export default function Hero() {
             </motion.div>
 
             {/* Search Box placed below the buttons */}
-            <motion.div variants={fadeInUp} className="!mt-1.5 sm:!mt-2 w-full max-w-2xl">
+            <motion.div variants={fadeInUp} className="!mt-1.5 mb-3 sm:!mt-2 w-full max-w-lg">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -204,8 +206,9 @@ export default function Hero() {
           </motion.div>
 
           {/* Spacer for Right Column on Desktop Grid */}
-          <div className="hidden lg:block lg:col-span-6 xl:col-span-6 2xl:col-span-6" />
+          <div className="hidden lg:block lg:col-span-7 xl:col-span-7 2xl:col-span-7" />
         </div>
+      </div>
       </div>
     </section>
   );

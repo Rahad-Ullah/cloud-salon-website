@@ -49,7 +49,7 @@ export default function RoleCardsSection() {
   };
 
   return (
-    <section className="w-full bg-white dark:bg-[#121214] py-2 sm:py-3 transition-colors duration-200">
+    <section className="w-full bg-white dark:bg-[#121214] mt-10 py-2 sm:py-3 transition-colors duration-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
@@ -65,7 +65,7 @@ export default function RoleCardsSection() {
             >
               <Link
                 href={card.link}
-                className="group relative block h-36 sm:h-40 lg:h-44 rounded-lg overflow-hidden shadow-md border border-border/40 transition-all duration-300 hover:shadow-xl"
+                className="group relative block h-48 sm:h-40 lg:h-44 rounded-lg overflow-hidden shadow-md border border-border/40 transition-all duration-300 hover:shadow-xl"
               >
                 {/* Background Image */}
                 <Image

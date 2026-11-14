@@ -43,7 +43,7 @@ export default function GetStartedCta() {
             </Link> */}
 
             <Link
-              href="/discover?tab=professionals"
+              href="/professionals"
               className=" px-7 sm:px-9 py-3.5 rounded-lg bg-gray-100 dark:bg-[#242322] hover:bg-[#D5D0C7] dark:hover:bg-[#2F2E2C] text-[#222222] dark:text-zinc-200 text-xs sm:text-sm font-medium transition-colors shadow-2xs border border-black/5 dark:border-white/10 text-center shrink-0"
             >
               Explore Professionals
