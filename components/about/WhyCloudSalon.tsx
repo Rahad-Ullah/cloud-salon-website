@@ -4,24 +4,24 @@ import Link from "next/link";
 
 export default function WhyCloudSalon() {
   return (
-    <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+    <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-24">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
         {/* Left Story Column */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D99722]/10 border border-[#D99722]/20">
             <Sparkles className="w-3.5 h-3.5 text-[#D99722]" />
-            <span className="text-xs font-bold text-[#D99722] uppercase tracking-[0.2em]">
+            <span className="text-[10px] sm:text-xs font-bold text-[#D99722] uppercase tracking-[0.2em]">
               THE CLOUD SALON MISSION
             </span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] text-foreground tracking-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] text-foreground tracking-tight">
             Started behind the chair. <br />
             <span className="text-[#D99722]">Built for everyone</span> behind the chair.
           </h2>
 
-          <div className="space-y-4 text-sm sm:text-base text-muted-foreground font-normal leading-relaxed">
-            <p className="text-foreground font-medium text-base">
+          <div className="space-y-3 sm:space-y-4 text-xs sm:text-base text-muted-foreground font-normal leading-relaxed">
+            <p className="text-foreground font-medium text-sm sm:text-base">
               In 2020, during the first lockdown, Amara Osei had 800 regular clients and no reliable way to contact them. No centralized CRM, no automatic reminders — just a phone flooded with thousands of unread messages.
             </p>
             <p>
@@ -32,7 +32,7 @@ export default function WhyCloudSalon() {
             </p>
           </div>
 
-          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-foreground">
+          <div className="pt-1 sm:pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs sm:text-sm text-foreground">
             <div className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border/70">
               <CheckCircle2 className="w-4 h-4 text-[#D99722] shrink-0" />
               <span>Independent client ownership</span>
@@ -54,7 +54,7 @@ export default function WhyCloudSalon() {
           <div className="pt-2">
             <Link
               href="/for-professionals"
-              className="inline-flex items-center gap-2 text-sm font-bold text-[#D99722] hover:underline group"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#D99722] hover:underline group"
             >
               <span>Explore partner benefits for stylists</span>
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -66,7 +66,7 @@ export default function WhyCloudSalon() {
         <div className="lg:col-span-6 pl-0 lg:pl-6">
           <div className="relative">
             {/* Main Salon Image Container */}
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[440px] sm:h-[520px] w-full border border-border/80 group">
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl h-[260px] sm:h-[440px] lg:h-[520px] w-full border border-border/80 group">
               <Image
                 src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
                 alt="Luxury Salon Interior Workspace"

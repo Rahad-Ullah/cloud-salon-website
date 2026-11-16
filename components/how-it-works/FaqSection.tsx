@@ -36,14 +36,14 @@ export default function FaqSection() {
     : defaultFaqs;
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-background">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+    <section className="py-10 sm:py-24 px-4 sm:px-6 lg:px-8 bg-background">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-16 items-start">
         {/* Left Title */}
-        <div className="lg:col-span-5 space-y-2">
-          <span className="text-xs font-semibold text-primary uppercase tracking-[0.2em] block">
+        <div className="lg:col-span-5 space-y-1.5 sm:space-y-2">
+          <span className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-[0.2em] block">
             GOOD TO KNOW
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+          <h2 className="text-2xl sm:text-4xl font-bold text-foreground">
             Questions, answered.
           </h2>
         </div>

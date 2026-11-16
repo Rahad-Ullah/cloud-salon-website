@@ -225,7 +225,7 @@ export default function WorkspacesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-10 sm:pb-20">
       {/* =========================================================================
           FIGMA HERO SECTION (Matching Home & Services Page Arched Frame)
       ========================================================================= */}
@@ -257,7 +257,7 @@ export default function WorkspacesPage() {
 
         {/* Main Grid Container for Left Content */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-[380px] sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-8 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-0 sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-6 sm:py-8 lg:py-0">
             <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 space-y-2.5 lg:space-y-2 2xl:space-y-3.5 text-left relative z-20">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -291,8 +291,8 @@ export default function WorkspacesPage() {
 
               {/* Search Bar */}
               <div className="pt-1.5 w-full max-w-152">
-                <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all">
+                <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-2 w-full">
+                  <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all min-w-0">
                     <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                     <input
                       type="text"
@@ -305,7 +305,7 @@ export default function WorkspacesPage() {
                       <button
                         type="button"
                         onClick={() => setSearchTerm("")}
-                        className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
+                        className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer shrink-0"
                         title="Clear search"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -315,19 +315,26 @@ export default function WorkspacesPage() {
 
                   <button
                     type="button"
-                    className="px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                    onClick={() => {
+                      const el = document.getElementById("available-workspaces");
+                      if (el) {
+                        el.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                    className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
                   >
-                    <span>Find Workspaces</span>
+                    <span className="sm:hidden">Search</span>
+                    <span className="hidden sm:inline">Find Workspaces</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
               {/* Dual Action Buttons: List a Workspace & Book a Workspace */}
-              <div className="flex w-full items-center gap-2.5 sm:gap-3 pt-1">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1 w-full">
                 <Link
                   href="/business/dashboard"
-                  className="flex-1 sm:flex-none px-3 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-card border border-border hover:border-[#D99722]/60 hover:bg-accent text-foreground font-semibold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer active:scale-98 whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-card border border-border hover:border-[#D99722]/60 hover:bg-accent text-foreground font-semibold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer active:scale-98"
                 >
                   <Plus className="w-4 h-4 text-[#D99722] shrink-0" />
                   <span>List a Workspace</span>
@@ -341,7 +348,7 @@ export default function WorkspacesPage() {
                       el.scrollIntoView({ behavior: "smooth" });
                     }
                   }}
-                  className="flex-1 sm:flex-none px-3 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer active:scale-98 whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer active:scale-98"
                 >
                   <Armchair className="w-4 h-4 shrink-0" />
                   <span>Book a Workspace</span>
@@ -358,7 +365,7 @@ export default function WorkspacesPage() {
       </section>
 
       {/* Main Content Area */}
-      <div id="available-workspaces" className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <div id="available-workspaces" className="container mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8 space-y-4 sm:space-y-6">
 
         {/* Results Header */}
         <div className="flex items-center justify-between">
@@ -375,7 +382,7 @@ export default function WorkspacesPage() {
 
         {/* Workspaces Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
               <div
                 key={n}
@@ -384,7 +391,7 @@ export default function WorkspacesPage() {
             ))}
           </div>
         ) : filteredChairs.length === 0 ? (
-          <div className="p-16 text-center bg-card border border-border rounded-xl flex flex-col items-center justify-center space-y-4 my-8">
+          <div className="p-8 sm:p-16 text-center bg-card border border-border rounded-xl flex flex-col items-center justify-center space-y-4 my-5 sm:my-8">
             <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
               <Armchair className="w-6 h-6" />
             </div>
@@ -398,7 +405,7 @@ export default function WorkspacesPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {filteredChairs.map((item: any) => {
               const isFav = favorites.includes(item._id);
               const chair = item.chair || item;
@@ -541,7 +548,7 @@ export default function WorkspacesPage() {
 
         {/* Pagination Section */}
         {pagination.totalPage > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-12 pt-6 border-t border-border/40">
+          <div className="flex items-center justify-center gap-2 mt-8 sm:mt-12 pt-5 sm:pt-6 border-t border-border/40">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page <= 1}

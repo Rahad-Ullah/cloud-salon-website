@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Eye, EyeOff, Mail, Lock, Sparkles } from "lucide-react";
 import { Suspense, useState, useEffect } from "react";
 import { useSignUpMutation } from "@/features/auth/authApi";
 
@@ -366,38 +366,20 @@ function RegisterFormContent() {
         </Link>
       </p>
 
-      {/* Role-Specific Discovery Info Links */}
-      {selectedRole.value === "professional" && (
-        <div className="pt-3 border-t border-border/60 text-center">
-          <p className="text-xs text-muted-foreground">
-            Beauty professional?{" "}
-            <Link
-              href="/for-professionals"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#D99722] font-semibold hover:underline inline-flex items-center gap-0.5"
-            >
-              See how it works &rarr;
-            </Link>
-          </p>
+      {/* How It Works Discovery Link */}
+      <div className="pt-3.5 border-t border-border/60 text-center">
+        <div className="inline-flex items-center justify-center gap-1.5 flex-wrap text-xs text-muted-foreground">
+          <Sparkles className="w-3.5 h-3.5 text-[#D99722] shrink-0" />
+          <span>Curious how Cloud Salon works for you?</span>
+          <Link
+            href="/how-it-works"
+            className="text-[#D99722] font-semibold hover:underline inline-flex items-center gap-1 group"
+          >
+            <span>Explore our step-by-step guide</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
-      )}
-
-      {selectedRole.value === "business" && (
-        <div className="pt-3 border-t border-border/60 text-center">
-          <p className="text-xs text-muted-foreground">
-            Salon owner?{" "}
-            <Link
-              href="/for-businesses"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#D99722] font-semibold hover:underline inline-flex items-center gap-0.5"
-            >
-              See how it works &rarr;
-            </Link>
-          </p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

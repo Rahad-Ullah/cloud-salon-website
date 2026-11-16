@@ -486,7 +486,7 @@ export default function Navbar() {
                   href="/register"
                   className="h-9 px-2.5 xl:px-3 2xl:h-10 2xl:px-4 rounded-sm border border-border bg-card hover:bg-accent hover:text-[#D99722] text-foreground text-xs font-semibold shadow-2xs flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
                 >
-                  GET STARTED
+                  Get Started
                 </Link>
             </>
           )}
@@ -705,7 +705,7 @@ export default function Navbar() {
                       size="md"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      GET STARTED
+                      Get Started
                     </Button>
                   </div>
 

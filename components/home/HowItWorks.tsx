@@ -25,10 +25,10 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="w-full bg-[#F4EBE0] dark:bg-[#151413] py-14 sm:py-20 transition-colors duration-200 select-none">
+    <section className="w-full bg-[#F4EBE0] dark:bg-[#151413] py-8 sm:py-20 transition-colors duration-200 select-none">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-6xl">
         {/* Header */}
-        <div className="mb-10 sm:mb-14">
+        <div className="mb-6 sm:mb-14">
           <span className="text-[11px] sm:text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-1">
             THE PROCESS
           </span>

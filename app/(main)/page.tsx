@@ -30,7 +30,7 @@ export default function HomePage() {
       {/* <StatsTicker /> */}
 
       {/* Landing Page Content Sections */}
-      <div className="space-y-14 sm:space-y-20 pt-10">
+      <div className="space-y-8 sm:space-y-20 pt-4 sm:pt-10">
         {/* 2. Our Services */}
         <CategoriesSection />
 

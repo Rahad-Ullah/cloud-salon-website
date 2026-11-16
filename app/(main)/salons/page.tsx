@@ -143,7 +143,7 @@ function SalonsContent() {
 
         {/* Main Grid Container for Left Content */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-[380px] sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-8 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-0 sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-6 sm:py-8 lg:py-0">
             <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 space-y-2.5 lg:space-y-2 2xl:space-y-3.5 text-left relative z-20">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -233,7 +233,7 @@ function SalonsContent() {
       </section>
 
       {/* Main Content Area */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-12 space-y-4 sm:space-y-6">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -272,13 +272,13 @@ function SalonsContent() {
         {/* SALONS LIST VIEW */}
         <div className="space-y-4">
           {isSalonsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[1, 2, 3, 4].map((n) => (
                 <div key={n} className="bg-card rounded-2xl h-80 border border-border animate-pulse" />
               ))}
             </div>
           ) : filteredSalons.length === 0 ? (
-            <div className="bg-card rounded-2xl p-12 text-center border border-border space-y-3">
+            <div className="bg-card rounded-2xl p-8 sm:p-12 text-center border border-border space-y-3">
               <Building2 className="w-10 h-10 text-muted-foreground mx-auto" />
               <h4 className="text-base font-bold text-foreground">No Salons Found</h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
@@ -286,7 +286,7 @@ function SalonsContent() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {filteredSalons?.reverse()?.map((salon: any) => (
                 <div
                   key={salon.id}

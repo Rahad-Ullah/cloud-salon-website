@@ -96,7 +96,7 @@ export default function Hero() {
             {/* Top Golden Subtitle */}
             <motion.div
               variants={fadeInUp}
-              className="flex items-center mt-1 sm:mt-2 lg:mt-13 gap-2 text-[10px] sm:text-xs lg:text-[10px] 2xl:text-xs font-bold text-[#D99722] uppercase tracking-[0.18em]"
+              className="flex items-center  mt-6 lg:mt-13 gap-2 text-[10px] sm:text-xs lg:text-[10px] 2xl:text-xs font-bold text-[#D99722] uppercase tracking-[0.18em]"
             >
               <motion.span
                 initial={{ width: 0 }}
@@ -143,65 +143,68 @@ export default function Hero() {
               })}
             </motion.div>
 
-            {/* Action Buttons */}
-            <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-2.5 sm:gap-3 pb-2 lg:pt-0 2xl:pt-0">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link
-                  href="/professionals"
-                  className="px-4 py-2 sm:px-5 sm:py-2.5 2xl:px-6 2xl:py-3 rounded-sm bg-[#D99722] hover:bg-[#A0732A] text-white font-semibold text-xs 2xl:text-sm shadow-md transition-all flex items-center gap-1.5 sm:gap-2 group cursor-pointer"
-                >
-                  <span>Book services</span>
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link
-                  href="/for-professionals"
-                  className="px-4 py-2 sm:px-5 sm:py-2.5 2xl:px-6 2xl:py-3 rounded-sm bg-[#EAE5D9] dark:bg-[#26282E] hover:bg-[#DDD8CD] border border-border/40 text-[#222222] dark:text-foreground font-semibold text-xs 2xl:text-sm transition-all shadow-2xs text-center cursor-pointer block"
-                >
-                  Join The Cloud Salon
-                </Link>
-              </motion.div>
-            </motion.div>
+            {/* Action Buttons & Search Box Container */}
+            <motion.div variants={fadeInUp} className="flex flex-col sm:block gap-2.5 sm:gap-0 w-full max-w-lg">
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pb-0 sm:pb-2 lg:pt-0 2xl:pt-0">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+                  <Link
+                    href="/professionals"
+                    className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-2.5 2xl:px-6 2xl:py-3 rounded-xl sm:rounded-sm bg-[#D99722] hover:bg-[#A0732A] text-white font-semibold text-xs 2xl:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 group cursor-pointer"
+                  >
+                    <span>Book services</span>
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+                  <Link
+                    href="/for-professionals"
+                    className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-2.5 2xl:px-6 2xl:py-3 rounded-xl sm:rounded-sm bg-[#EAE5D9] dark:bg-[#26282E] hover:bg-[#DDD8CD] border border-border/40 text-[#222222] dark:text-foreground font-semibold text-xs 2xl:text-sm transition-all shadow-2xs flex items-center justify-center text-center cursor-pointer"
+                  >
+                    Join The Cloud Salon
+                  </Link>
+                </motion.div>
+              </div>
 
-            {/* Search Box placed below the buttons */}
-            <motion.div variants={fadeInUp} className="!mt-1.5 mb-3 sm:!mt-2 w-full max-w-lg">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSearch();
-                }}
-                className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-2 transition-all"
-              >
-                <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all">
-                  <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search services, salons or specialists..."
-                    className="w-full bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-                      title="Clear search"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+              {/* Search Box placed below the buttons */}
+              <div className="w-full sm:!mt-1.5 mb-3 sm:!mt-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSearch();
+                  }}
+                  className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-2 transition-all w-full"
                 >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>Search</span>
-                </button>
-              </form>
+                  <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all min-w-0">
+                    <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search services, salons or specialists..."
+                      className="w-full bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer shrink-0"
+                        title="Clear search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Search</span>
+                  </button>
+                </form>
+              </div>
             </motion.div>
           </motion.div>
 

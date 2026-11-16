@@ -22,7 +22,7 @@ export default function CategoriesSection() {
   }));
 
   return (
-    <section className="w-full py-6 sm:py-10 bg-white dark:bg-[#121214] transition-colors duration-200 select-none">
+    <section className="w-full py-2 sm:py-10 bg-white dark:bg-[#121214] transition-colors duration-200 select-none">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">

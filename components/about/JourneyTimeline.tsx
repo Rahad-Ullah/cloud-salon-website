@@ -36,28 +36,28 @@ export default function JourneyTimeline() {
   ];
 
   return (
-    <section className="bg-card text-foreground py-20 sm:py-28 border-y border-border relative overflow-hidden">
+    <section className="bg-card text-foreground py-10 sm:py-28 border-y border-border relative overflow-hidden">
       {/* Subtle ambient lighting */}
       <div className="absolute top-1/2 right-0 w-80 h-80 bg-[#D99722]/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-14 sm:mb-16">
-          <span className="text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-3">
+        <div className="mb-6 sm:mb-16">
+          <span className="text-[10px] sm:text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-2 sm:mb-3">
             OUR JOURNEY &amp; MILESTONES
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-tight">
             Four years of building <br className="hidden sm:inline" />
             <span className="text-[#D99722]">in public</span> with our community.
           </h2>
         </div>
 
         {/* Timeline Track with 100% Centered Alignment */}
-        <div className="relative space-y-6 sm:space-y-8">
+        <div className="relative space-y-4 sm:space-y-8">
           {/* Vertical Timeline Guide Line - Dead centered through every node */}
           <div className="absolute left-5 sm:left-6 top-5 sm:top-6 bottom-5 sm:bottom-6 w-[2px] bg-[#D99722]/30 -translate-x-1/2" />
 
           {timeline.map((item, idx) => (
-            <div key={idx} className="relative flex items-start gap-4 sm:gap-6 group">
+            <div key={idx} className="relative flex items-start gap-3 sm:gap-6 group">
               {/* Node Dot Container - Exact width/height ensures line bisects the center */}
               <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0 relative z-10 mt-1 sm:mt-0">
                 <div
@@ -77,7 +77,7 @@ export default function JourneyTimeline() {
 
               {/* Milestone Content Card */}
               <div
-                className={`flex-1 p-5 sm:p-6 rounded-2xl border transition-all ${
+                className={`flex-1 p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all ${
                   item.highlight
                     ? "bg-[#D99722]/10 border-[#D99722]/40 shadow-sm"
                     : "bg-background/80 hover:bg-background border-border/80 hover:border-[#D99722]/40 shadow-xs"

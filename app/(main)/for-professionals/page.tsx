@@ -6,7 +6,7 @@ import GetStartedCta from "@/components/for-professionals/GetStartedCta";
 
 export default function ForProfessionalsPage() {
   return (
-    <div className="min-h-screen space-y-20">
+    <div className="min-h-screen space-y-10 sm:space-y-20">
       <Hero />
       <FeaturesGrid />
       <JourneyTimeline />

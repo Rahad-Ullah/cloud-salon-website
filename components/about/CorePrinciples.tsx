@@ -29,27 +29,27 @@ export default function CorePrinciples() {
   ];
 
   return (
-    <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-      <div className="max-w-3xl mb-12 sm:mb-16">
-        <span className="text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-3">
+    <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-24">
+      <div className="max-w-3xl mb-6 sm:mb-16">
+        <span className="text-[10px] sm:text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-2 sm:mb-3">
           WHAT WE STAND FOR
         </span>
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
           The core principles that shape <br className="hidden sm:inline" />
           <span className="text-[#D99722]">every decision</span> we make.
         </h2>
-        <p className="text-sm sm:text-base text-muted-foreground mt-4 leading-relaxed max-w-xl">
+        <p className="text-xs sm:text-base text-muted-foreground mt-3 sm:mt-4 leading-relaxed max-w-xl">
           When we design a new booking workflow, chair rental service, or platform policy, we hold ourselves accountable to these four core foundations.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {principles.map((p, idx) => {
           const Icon = p.icon;
           return (
             <div
               key={idx}
-              className="bg-card rounded-2xl p-6 sm:p-8 border border-border/80 shadow-xs hover:shadow-xl hover:border-[#D99722]/50 transition-all duration-300 group flex flex-col justify-between"
+              className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-8 border border-border/80 shadow-xs hover:shadow-xl hover:border-[#D99722]/50 transition-all duration-300 group flex flex-col justify-between"
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">

@@ -187,7 +187,7 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 pb-20 select-none">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 pb-10 sm:pb-20 select-none">
       {/* =========================================================================
           FIGMA HERO SECTION (Matching Home Page Arched Frame & Client Reference)
       ========================================================================= */}
@@ -219,7 +219,7 @@ export default function ServicesPage() {
 
         {/* Main Grid Container for Left Content */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-[380px] sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-8 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-0 sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-6 sm:py-8 lg:py-0">
             <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 space-y-2.5 lg:space-y-2 2xl:space-y-3.5 text-left relative z-20">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -253,7 +253,7 @@ export default function ServicesPage() {
 
               {/* Search Bar */}
               <div className="pt-1.5 w-full max-w-lg">
-                <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-2">
                   <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all">
                     <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                     <input
@@ -302,9 +302,9 @@ export default function ServicesPage() {
       {/* =========================================================================
           EXPLORE SERVICES & CATEGORY PILLS SECTION (Matching Reference Image)
       ========================================================================= */}
-      <section ref={gridTopRef} className="container mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12 scroll-mt-24">
+      <section ref={gridTopRef} className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-12 scroll-mt-24">
         {/* Section Header with Category Filter Pills */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8 pb-4 border-b border-border/50">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-5 mb-5 sm:mb-8 pb-3 sm:pb-4 border-b border-border/50">
           <div className="shrink-0">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Explore Services
@@ -488,7 +488,7 @@ export default function ServicesPage() {
 
             {/* Pagination Controls - only rendered if more than ITEMS_PER_PAGE categories */}
             {filteredCategories.length > ITEMS_PER_PAGE && (
-              <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border/40">
+              <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pt-5 sm:pt-8 border-t border-border/40">
                 <div className="text-xs text-muted-foreground font-medium">
                   Showing{" "}
                   <span className="font-bold text-foreground">
@@ -551,17 +551,17 @@ export default function ServicesPage() {
         {/* =========================================================================
             BOTTOM CALL-TO-ACTION BANNER (Matching Client Reference Image)
         ========================================================================= */}
-        <div className="mt-16 sm:mt-20">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#121214] text-white p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+        <div className="mt-10 sm:mt-20">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#121214] text-white p-5 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6 shadow-xl">
             {/* Ambient Lighting */}
             <div className="absolute top-0 right-1/4 w-80 h-80 bg-[#D99722]/15 rounded-full blur-[90px] pointer-events-none" />
 
-            <div className="relative z-10 flex items-center gap-5 text-left">
-              <div className="w-14 h-14 rounded-2xl bg-[#D99722]/20 text-[#D99722] flex items-center justify-center shrink-0 border border-[#D99722]/40 shadow-inner">
-                <UserPlus className="w-7 h-7" />
+            <div className="relative z-10 flex items-center gap-4 sm:gap-5 text-left">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#D99722]/20 text-[#D99722] flex items-center justify-center shrink-0 border border-[#D99722]/40 shadow-inner">
+                <UserPlus className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight">
+                <h3 className="text-base sm:text-2xl font-extrabold text-white tracking-tight">
                   Are you an independent beauty specialist?
                 </h3>
                 <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-lg">
@@ -572,7 +572,7 @@ export default function ServicesPage() {
 
             <Link
               href="/for-professionals"
-              className="relative z-10 px-8 py-3.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#D99722]/25 transition-all flex items-center gap-2 shrink-0 cursor-pointer active:scale-95"
+              className="relative z-10 w-full sm:w-auto justify-center px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#D99722]/25 transition-all flex items-center gap-2 shrink-0 cursor-pointer active:scale-95"
             >
               <span>Join as a Professional</span>
               <ArrowRight className="w-4 h-4" />

@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function GetStartedCta() {
   return (
-    <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-accent/70 text-center border-t border-border">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight tracking-tight">
+    <section className="py-10 sm:py-20 px-4 sm:px-6 lg:px-8 bg-accent/70 text-center border-t border-border">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight tracking-tight">
           Ready to get{" "}
           <span className="text-primary">started?</span>
         </h2>

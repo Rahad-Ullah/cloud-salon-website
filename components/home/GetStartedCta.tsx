@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function GetStartedCta() {
   return (
-    <section className="w-full bg-[#F4EBE0] dark:bg-[#151413] py-16 sm:py-24 lg:py-28 transition-colors duration-200 select-none">
+    <section className="w-full bg-[#F4EBE0] dark:bg-[#151413] py-10 sm:py-24 lg:py-28 transition-colors duration-200 select-none">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

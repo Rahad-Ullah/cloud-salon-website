@@ -13,8 +13,8 @@ interface RoleStepsTimelineProps {
 
 export default function RoleStepsTimeline({ steps }: RoleStepsTimelineProps) {
   return (
-    <section className="py-20 flex justify-center items-center bg-background">
-      <div className="relative space-y-16 sm:space-y-20 max-w-xl">
+    <section className="py-8 sm:py-20 px-4 sm:px-6 flex justify-center items-center bg-background">
+      <div className="relative space-y-8 sm:space-y-20 max-w-xl w-full">
         {/* Vertical Connecting Line */}
         <div className="absolute left-6 sm:left-7 top-6 bottom-6 w-[2px] bg-border -z-0" />
 
@@ -25,7 +25,7 @@ export default function RoleStepsTimeline({ steps }: RoleStepsTimelineProps) {
           return (
             <div
               key={step.num}
-              className="relative z-10 flex items-start gap-5 sm:gap-6 group"
+              className="relative z-10 flex items-start gap-4 sm:gap-6 group"
             >
               {/* Icon Circle */}
               <div

@@ -174,7 +174,7 @@ function ProfessionalsContent() {
 
         {/* Main Grid Container for Left Content */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-[380px] sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-8 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-0 sm:min-h-[440px] lg:min-h-[370px] 2xl:min-h-[535px] py-6 sm:py-8 lg:py-0">
             <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 space-y-2.5 lg:space-y-2 2xl:space-y-3.5 text-left relative z-20">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -265,7 +265,7 @@ function ProfessionalsContent() {
       </section>
 
       {/* Main Content Area */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-12 space-y-5 sm:space-y-8">
         {/* Category Carousel Pills Bar */}
         <div className="relative flex items-center gap-2">
           <button
@@ -327,7 +327,7 @@ function ProfessionalsContent() {
         </div>
 
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-5 rounded-2xl border border-border shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs">
           <div>
             <h3 className="text-base font-bold text-foreground">Verified Beauty &amp; Grooming Specialists</h3>
             <p className="text-xs text-muted-foreground mt-0.5">{rawData.length} active professionals ready for booking</p>
@@ -363,13 +363,13 @@ function ProfessionalsContent() {
 
         {/* Content Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
               <div key={n} className="bg-card rounded-2xl h-96 border border-border animate-pulse" />
             ))}
           </div>
         ) : rawData.length === 0 ? (
-          <div className="bg-card rounded-3xl p-16 text-center border border-border space-y-4 max-w-lg mx-auto shadow-xs">
+          <div className="bg-card rounded-3xl p-8 sm:p-16 text-center border border-border space-y-4 max-w-lg mx-auto shadow-xs">
             <div className="w-16 h-16 rounded-full bg-[#D99722]/15 text-[#D99722] flex items-center justify-center mx-auto">
               <User className="w-8 h-8" />
             </div>
@@ -386,7 +386,7 @@ function ProfessionalsContent() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {rawData.map((item: any, idx: number) => {
               const pro = item.professional || {};
               const roleRef = pro.roleRef || {};

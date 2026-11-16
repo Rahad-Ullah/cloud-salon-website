@@ -141,7 +141,7 @@ export default function HowItWorksPage() {
   const currentRoleData = roleContent[activeRole];
 
   return (
-    <div className="min-h-screen text-[#1A1A1A] font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       <Hero activeRole={activeRole} setActiveRole={setActiveRole} />
       <RoleOverviewHeader
         title={currentRoleData.headerTitle}
