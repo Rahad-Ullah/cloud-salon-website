@@ -86,6 +86,13 @@ function ProfessionalDetailsContent({ professionalId }: { professionalId: string
         location: locationStr,
         salonName: salonObj.name,
         salonId: salonObj._id,
+        businessType: salonObj.businessType || roleRef.title || "",
+        salonDescription: salonObj.description || "",
+        website: salonObj.website || "",
+        instagram: salonObj.instagram || "",
+        address: salonObj.address || proObj.address || null,
+        startDate: rawItem.startDate || proObj?.startDate || null,
+        endDate: rawItem.endDate || proObj?.endDate || null,
         email: proObj.email || salonObj.email,
         phone: proObj.phone || salonObj.phone,
       }

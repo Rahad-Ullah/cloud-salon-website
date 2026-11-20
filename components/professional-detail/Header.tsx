@@ -196,7 +196,7 @@ export default function Header({
             {[
               { id: "services", label: "Services" },
               { id: "about", label: "About Specialist" },
-              { id: "portfolio", label: "Portfolio Showcase" },
+              { id: "portfolio", label: "Portfolio Gallery" },
               { id: "reviews", label: `Reviews (${reviewsCount})` },
             ].map((tab) => (
               <button
