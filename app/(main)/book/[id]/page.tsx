@@ -142,7 +142,7 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
     }
   };
 
-  // Convert selected date and time to ISO 8601 string: startsAt
+  // Convert selected date and time to ISO 8601 string: startsAt in UTC (physical salon time)
   const formatStartsAtISO = (): string => {
     try {
       if (selectedSlot?.startsAt) {
@@ -166,9 +166,8 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
       const formattedHours = hours < 10 ? `0${hours}` : `${hours}`;
       const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
 
-      const isoStr = new Date(`${datePart}T${formattedHours}:${formattedMinutes}:00.000Z`).toISOString();
-      return isoStr;
-    } catch (e) {
+      return `${datePart}T${formattedHours}:${formattedMinutes}:00.000Z`;
+    } catch {
       return new Date().toISOString();
     }
   };
@@ -202,7 +201,7 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
     }
 
     // 3. User is logged in as Customer -> execute API payload
-    const payload = {
+    const payload: Record<string, any> = {
       professional: proData.id,
       services: selectedServices.map((s) => s._id),
       startsAt: formatStartsAtISO(),
@@ -214,6 +213,10 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
         total,
       },
     };
+
+    if (selectedSlot?.endsAt) {
+      payload.endsAt = selectedSlot.endsAt;
+    }
 
     try {
       const res = await createAppointment(payload).unwrap();
@@ -277,6 +280,8 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
                 setSelectedTime={setSelectedTime}
                 handleNextStep={handleNextStep}
                 availability={availabilityList}
+                startDate={rawItem?.startDate || proObj?.startDate}
+                endDate={rawItem?.endDate || proObj?.endDate}
                 onSlotSelect={setSelectedSlot}
               />
             )}

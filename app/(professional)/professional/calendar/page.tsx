@@ -72,6 +72,7 @@ export default function ProfessionalCalendarPage() {
     if (!dateStr) return "";
     try {
       return new Date(dateStr).toLocaleTimeString("en-US", {
+        timeZone: "UTC",
         hour: "numeric",
         minute: "2-digit",
       });
@@ -84,6 +85,7 @@ export default function ProfessionalCalendarPage() {
     if (!dateStr) return "N/A";
     try {
       return new Date(dateStr).toLocaleDateString("en-US", {
+        timeZone: "UTC",
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -278,9 +280,9 @@ export default function ProfessionalCalendarPage() {
                       if (!dateStr || !item.day || !item.isCurrentMonth) return false;
                       const d = new Date(dateStr);
                       return (
-                        d.getFullYear() === currentDateState.getFullYear() &&
-                        d.getMonth() === currentDateState.getMonth() &&
-                        d.getDate() === item.day
+                        d.getUTCFullYear() === currentDateState.getFullYear() &&
+                        d.getUTCMonth() === currentDateState.getMonth() &&
+                        d.getUTCDate() === item.day
                       );
                     });
 

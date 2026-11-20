@@ -56,6 +56,18 @@ async function proxyRequest(
   }
 
   try {
+    if (subPath.includes("appointments")) {
+      let bodyLog = "";
+      if (body) {
+        try {
+          bodyLog = new TextDecoder().decode(body as ArrayBuffer);
+        } catch {
+          bodyLog = "[binary]";
+        }
+      }
+      console.log(`[API Proxy DEBUG] ${request.method} ${targetUrl} payload:`, bodyLog);
+    }
+
     const backendResponse = await fetch(targetUrl, {
       method: request.method,
       headers,
@@ -78,6 +90,10 @@ async function proxyRequest(
     });
 
     const responseBody = await backendResponse.text();
+
+    if (subPath.includes("appointments")) {
+      console.log(`[API Proxy DEBUG] ${request.method} ${targetUrl} status ${backendResponse.status} response:`, responseBody);
+    }
 
     return new NextResponse(responseBody, {
       status: backendResponse.status,

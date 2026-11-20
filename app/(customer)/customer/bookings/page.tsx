@@ -34,6 +34,7 @@ function CustomerBookingsContent() {
     try {
       const date = new Date(startsAtStr);
       return date.toLocaleDateString("en-US", {
+        timeZone: "UTC",
         weekday: "short",
         day: "numeric",
         month: "short",

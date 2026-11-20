@@ -134,6 +134,7 @@ export default function ProfessionalBookingsPage() {
     try {
       const d = new Date(dateStr);
       return d.toLocaleDateString("en-US", {
+        timeZone: "UTC",
         weekday: "short",
         month: "short",
         day: "numeric",
