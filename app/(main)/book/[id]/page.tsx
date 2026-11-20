@@ -79,6 +79,7 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString);
   const [selectedTime, setSelectedTime] = useState<string>("10:30 AM");
+  const [selectedSlot, setSelectedSlot] = useState<{ startsAt: string; endsAt: string } | null>(null);
 
   // Sync selectedServices, date, time, and step from query params
   useEffect(() => {
@@ -144,6 +145,9 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
   // Convert selected date and time to ISO 8601 string: startsAt
   const formatStartsAtISO = (): string => {
     try {
+      if (selectedSlot?.startsAt) {
+        return selectedSlot.startsAt;
+      }
       const datePart = selectedDate || getTodayDateString(); // YYYY-MM-DD
       let timePart = selectedTime || "10:30 AM";
 
@@ -267,11 +271,13 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
             )}
             {step === 3 && (
               <TimeStep
+                userId={proObj._id || proData.id || proIdParam}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 setSelectedTime={setSelectedTime}
                 handleNextStep={handleNextStep}
                 availability={availabilityList}
+                onSlotSelect={setSelectedSlot}
               />
             )}
             {step === 4 && (

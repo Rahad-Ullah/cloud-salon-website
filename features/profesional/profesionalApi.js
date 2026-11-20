@@ -83,6 +83,14 @@ export const profesionalApi = baseApi.injectEndpoints({
             providesTags: ["professional"]
         }),
 
+        getProfessionalAvailability: builder.query({
+            query: ({ userId, date }) => ({
+                url: `/professionals/${userId}/availability?date=${date}`,
+                method: "GET",
+            }),
+            providesTags: ["professional"]
+        }),
+
     }),
 });
 
@@ -91,5 +99,6 @@ export const {
     useGetAllProfessionalQuery,
     useGetSingleProfessionalQuery,
     useGetServiceByProfessionalQuery,
-    useGetProfessionalsBySalonIdQuery
+    useGetProfessionalsBySalonIdQuery,
+    useGetProfessionalAvailabilityQuery,
 } = profesionalApi;

@@ -1,113 +1,126 @@
-import { useEffect } from "react";
-import { Clock } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Clock, Loader2, CalendarX2 } from "lucide-react";
 import { AvailabilityDay } from "./DateStep";
+import { useGetProfessionalAvailabilityQuery } from "@/features/profesional/profesionalApi";
+
+export interface ApiSlot {
+  startsAt: string;
+  endsAt: string;
+}
 
 interface TimeStepProps {
+  userId?: string;
   selectedDate: string;
   selectedTime: string;
   setSelectedTime: (t: string) => void;
   handleNextStep: () => void;
   availability?: AvailabilityDay[];
+  onSlotSelect?: (slot: ApiSlot) => void;
 }
 
 export default function TimeStep({
+  userId,
   selectedDate,
   selectedTime,
   setSelectedTime,
   handleNextStep,
   availability = [],
+  onSlotSelect,
 }: TimeStepProps) {
-  // Convert "10:30 AM" or "19:00" string to minutes from midnight
-  const parseTimeToMinutes = (timeStr?: string): number | null => {
-    if (!timeStr) return null;
-    const match12 = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
-    if (match12) {
-      let h = parseInt(match12[1], 10);
-      const m = parseInt(match12[2], 10);
-      const ampm = match12[3]?.toUpperCase();
-      if (ampm === "PM" && h < 12) h += 12;
-      if (ampm === "AM" && h === 12) h = 0;
-      return h * 60 + m;
-    }
-    const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-    if (match24) {
-      return parseInt(match24[1], 10) * 60 + parseInt(match24[2], 10);
-    }
-    return null;
-  };
+  // Fetch real-time available slots for that professional on the selected date
+  const {
+    data: availabilityRes,
+    isLoading: isSlotsLoading,
+    isFetching: isSlotsFetching,
+  } = useGetProfessionalAvailabilityQuery(
+    { userId: userId || "", date: selectedDate },
+    { skip: !userId || !selectedDate }
+  );
 
-  // Find operating hours for selected date
-  const getDayAvailability = () => {
-    if (!selectedDate || !availability || availability.length === 0) return null;
+  const rawApiSlots: ApiSlot[] = Array.isArray(availabilityRes?.data?.slots)
+    ? availabilityRes.data.slots
+    : [];
+
+  // Helper to convert ISO slot to formatted 12h time string (e.g. "10:30 AM")
+  const formatSlotTime = (isoStr: string) => {
     try {
-      const parts = selectedDate.split("-").map(Number);
-      if (parts.length === 3) {
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const dayName = dayNames[d.getDay()];
-        return availability.find((a) => a.day?.toLowerCase() === dayName.toLowerCase()) || null;
+      const match = isoStr.match(/T(\d{2}):(\d{2})/);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        const m = match[2];
+        const ampm = h >= 12 ? "PM" : "AM";
+        if (h > 12) h -= 12;
+        if (h === 0) h = 12;
+        return `${h}:${m} ${ampm}`;
       }
+      return new Date(isoStr).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
     } catch {
-      return null;
+      return isoStr;
     }
-    return null;
   };
 
-  const dayAvail = getDayAvailability();
-  const openMinutes = dayAvail?.openTime ? parseTimeToMinutes(dayAvail.openTime) : null;
-  const closeMinutes = dayAvail?.closeTime ? parseTimeToMinutes(dayAvail.closeTime) : null;
-  const isAvailableDay = dayAvail ? dayAvail.isAvailable !== false && dayAvail.openTime !== dayAvail.closeTime : true;
+  // Map API slots to slot items with hour metadata for section categorization
+  const mappedSlots = useMemo(() => {
+    return rawApiSlots.map((slot) => {
+      const timeLabel = formatSlotTime(slot.startsAt);
+      const match = slot.startsAt.match(/T(\d{2})/);
+      const hour = match ? parseInt(match[1], 10) : 10;
+      return {
+        ...slot,
+        label: timeLabel,
+        hour,
+      };
+    });
+  }, [rawApiSlots]);
 
-  const isSlotAvailable = (timeSlot: string): boolean => {
-    if (!isAvailableDay) return false;
-    if (openMinutes === null || closeMinutes === null) return true;
-    const slotMinutes = parseTimeToMinutes(timeSlot);
-    if (slotMinutes === null) return true;
-    return slotMinutes >= openMinutes && slotMinutes < closeMinutes;
-  };
+  // Categorize slots
+  const morningSlots = mappedSlots.filter((s) => s.hour < 12);
+  const afternoonSlots = mappedSlots.filter((s) => s.hour >= 12 && s.hour < 17);
+  const eveningSlots = mappedSlots.filter((s) => s.hour >= 17);
 
-  const morningSlots = ["9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM"];
-  const afternoonSlots = ["12:00 PM", "1:00 PM", "2:00 PM", "2:30 PM", "3:00 PM", "4:00 PM"];
-  const eveningSlots = ["5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM", "7:00 PM"];
-  const allSlots = [...morningSlots, ...afternoonSlots, ...eveningSlots];
-
-  // Auto-select first available time slot if currently selected time is outside business hours
+  // Auto-select first available slot when slots load or date changes
   useEffect(() => {
-    if (selectedTime && !isSlotAvailable(selectedTime)) {
-      const firstValid = allSlots.find((s) => isSlotAvailable(s));
-      if (firstValid) {
-        setSelectedTime(firstValid);
-      }
-    } else if (!selectedTime) {
-      const firstValid = allSlots.find((s) => isSlotAvailable(s));
-      if (firstValid) {
-        setSelectedTime(firstValid);
+    if (mappedSlots.length > 0) {
+      const isCurrentSelectedValid = mappedSlots.some((s) => s.label === selectedTime);
+      if (!selectedTime || !isCurrentSelectedValid) {
+        const firstSlot = mappedSlots[0];
+        setSelectedTime(firstSlot.label);
+        if (onSlotSelect) {
+          onSlotSelect({ startsAt: firstSlot.startsAt, endsAt: firstSlot.endsAt });
+        }
       }
     }
-  }, [selectedDate, dayAvail, selectedTime]);
+  }, [mappedSlots, selectedTime, setSelectedTime, onSlotSelect]);
 
-  const isDisabled = !selectedTime || !isSlotAvailable(selectedTime);
+  const handleSelectSlot = (slot: { startsAt: string; endsAt: string; label: string }) => {
+    setSelectedTime(slot.label);
+    if (onSlotSelect) {
+      onSlotSelect({ startsAt: slot.startsAt, endsAt: slot.endsAt });
+    }
+  };
 
-  const renderSlotButton = (t: string) => {
-    const available = isSlotAvailable(t);
-    const isSelected = selectedTime === t;
+  const isSelectedSlotAvailable = mappedSlots.some((s) => s.label === selectedTime);
+  const isDisabled = isSlotsLoading || mappedSlots.length === 0 || !selectedTime || !isSelectedSlotAvailable;
+
+  const renderSlotButton = (slot: { startsAt: string; endsAt: string; label: string }) => {
+    const isSelected = selectedTime === slot.label;
 
     return (
       <button
-        key={t}
+        key={slot.startsAt}
         type="button"
-        disabled={!available}
-        onClick={() => setSelectedTime(t)}
-        title={!available ? "Outside salon operating hours" : undefined}
-        className={`py-3.5 px-4 rounded-xl text-xs sm:text-sm transition-all border text-center font-semibold ${
+        onClick={() => handleSelectSlot(slot)}
+        className={`py-3.5 px-4 rounded-xl text-xs sm:text-sm transition-all border text-center font-semibold cursor-pointer ${
           isSelected
-            ? "bg-[#D99722] text-white border-[#D99722] shadow-md ring-1 ring-[#D99722]/50"
-            : !available
-            ? "bg-muted/15 text-muted-foreground/30 border-transparent cursor-not-allowed opacity-35 line-through decoration-muted-foreground/30"
-            : "bg-card hover:bg-accent text-foreground border-border cursor-pointer"
+            ? "bg-[#D99722] text-white border-[#D99722] shadow-md ring-2 ring-[#D99722]/50 scale-[1.02]"
+            : "bg-card hover:bg-accent text-foreground border-border hover:border-[#D99722]/40"
         }`}
       >
-        {t}
+        {slot.label}
       </button>
     );
   };
@@ -122,59 +135,85 @@ export default function TimeStep({
           Available start times for <span className="font-bold text-foreground">{selectedDate || "selected date"}</span>
         </p>
 
-        {dayAvail && dayAvail.openTime && dayAvail.closeTime && (
-          <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-accent/60 border border-border text-xs text-muted-foreground">
-            <Clock className="w-3.5 h-3.5 text-[#D99722]" />
-            <span>
-              Operating hours on this day:{" "}
-              <strong className="text-foreground">
-                {dayAvail.openTime} – {dayAvail.closeTime}
-              </strong>
-            </span>
+        {isSlotsFetching && (
+          <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-[#D99722]/10 border border-[#D99722]/20 text-xs text-[#D99722]">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Fetching live availability for {selectedDate}...</span>
           </div>
         )}
       </div>
 
-      <div className="space-y-6">
-        {/* MORNING */}
-        <div className="space-y-3">
-          <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-            MORNING
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {morningSlots.map(renderSlotButton)}
+      {isSlotsLoading ? (
+        <div className="space-y-4 py-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="h-12 bg-card border border-border rounded-xl animate-pulse" />
+            ))}
           </div>
+          <p className="text-xs text-center text-muted-foreground animate-pulse">
+            Loading available appointment slots...
+          </p>
         </div>
+      ) : mappedSlots.length === 0 ? (
+        <div className="p-10 text-center bg-card rounded-2xl border border-border space-y-3">
+          <CalendarX2 className="w-10 h-10 text-muted-foreground/60 mx-auto" />
+          <h4 className="text-sm font-bold text-foreground">No Available Slots on This Date</h4>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            This professional has no open booking slots on <strong className="text-foreground">{selectedDate}</strong>.
+            Please go back to the previous step and pick another date.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* MORNING */}
+          {morningSlots.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-[#D99722]" />
+                <span>MORNING ({morningSlots.length})</span>
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {morningSlots.map(renderSlotButton)}
+              </div>
+            </div>
+          )}
 
-        {/* AFTERNOON */}
-        <div className="space-y-3">
-          <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-            AFTERNOON
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {afternoonSlots.map(renderSlotButton)}
-          </div>
-        </div>
+          {/* AFTERNOON */}
+          {afternoonSlots.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-[#D99722]" />
+                <span>AFTERNOON ({afternoonSlots.length})</span>
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {afternoonSlots.map(renderSlotButton)}
+              </div>
+            </div>
+          )}
 
-        {/* EVENING */}
-        <div className="space-y-3">
-          <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-            EVENING
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {eveningSlots.map(renderSlotButton)}
-          </div>
+          {/* EVENING */}
+          {eveningSlots.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-[#D99722]" />
+                <span>EVENING ({eveningSlots.length})</span>
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {eveningSlots.map(renderSlotButton)}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       <button
         type="button"
         disabled={isDisabled}
         onClick={handleNextStep}
-        className={`w-full py-4 font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer text-center block mt-8 ${
+        className={`w-full py-4 font-bold text-sm rounded-xl shadow-md transition-all text-center block mt-8 ${
           isDisabled
             ? "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-            : "bg-[#D99722] hover:bg-[#C2841B] text-white"
+            : "bg-[#D99722] hover:bg-[#C2841B] text-white cursor-pointer"
         }`}
       >
         {isDisabled ? "Please select an available time slot" : `Continue with ${selectedTime}`}
