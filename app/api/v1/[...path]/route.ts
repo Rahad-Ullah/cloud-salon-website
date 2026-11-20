@@ -14,12 +14,13 @@ async function proxyRequest(
   const headers = new Headers();
   request.headers.forEach((value, key) => {
     const lowerKey = key.toLowerCase();
-    // Exclude hop-by-hop headers and host
+    // Exclude hop-by-hop headers, host, cookies, and compression headers
     if (
       lowerKey !== "host" &&
       lowerKey !== "connection" &&
       lowerKey !== "content-length" &&
-      lowerKey !== "cookie"
+      lowerKey !== "cookie" &&
+      lowerKey !== "accept-encoding"
     ) {
       headers.set(key, value);
     }
@@ -76,7 +77,9 @@ async function proxyRequest(
       }
     });
 
-    return new NextResponse(backendResponse.body, {
+    const responseBody = await backendResponse.text();
+
+    return new NextResponse(responseBody, {
       status: backendResponse.status,
       statusText: backendResponse.statusText,
       headers: responseHeaders,

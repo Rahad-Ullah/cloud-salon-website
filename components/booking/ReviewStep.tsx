@@ -97,7 +97,7 @@ export default function ReviewStep({
             <Calendar className="w-4 h-4 text-[#D99722] shrink-0" />
             <div>
               <span className="text-[10px] text-muted-foreground uppercase block">Date</span>
-              <span className="font-bold text-foreground">{selectedDate || "2026-10-08"}</span>
+              <span className="font-bold text-foreground">{selectedDate}</span>
             </div>
           </div>
 

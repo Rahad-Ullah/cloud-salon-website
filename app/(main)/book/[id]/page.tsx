@@ -58,9 +58,26 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
     description: s.description || "",
   }));
 
+  // Resolve professional & salon weekly opening schedule
+  const availabilityList =
+    rawItem?.availability ||
+    proObj?.availability ||
+    roleRef?.availability ||
+    salonObj?.availability ||
+    [];
+
+  // Helper for timezone-safe local date string (YYYY-MM-DD)
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   // Multi-service selection state
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>("2026-10-08");
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString);
   const [selectedTime, setSelectedTime] = useState<string>("10:30 AM");
 
   // Sync selectedServices, date, time, and step from query params
@@ -127,7 +144,7 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
   // Convert selected date and time to ISO 8601 string: startsAt
   const formatStartsAtISO = (): string => {
     try {
-      const datePart = selectedDate || "2026-10-08"; // YYYY-MM-DD
+      const datePart = selectedDate || getTodayDateString(); // YYYY-MM-DD
       let timePart = selectedTime || "10:30 AM";
 
       let hours = 10;
@@ -245,6 +262,7 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
                 startDate={rawItem?.startDate || proObj?.startDate}
                 endDate={rawItem?.endDate || proObj?.endDate}
                 professionalName={proData.name}
+                availability={availabilityList}
               />
             )}
             {step === 3 && (
@@ -253,6 +271,7 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
                 selectedTime={selectedTime}
                 setSelectedTime={setSelectedTime}
                 handleNextStep={handleNextStep}
+                availability={availabilityList}
               />
             )}
             {step === 4 && (

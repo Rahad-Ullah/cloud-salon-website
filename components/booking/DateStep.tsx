@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CalendarDays, Info, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CalendarDays, Info, CheckCircle2, Clock } from "lucide-react";
+import { toast } from "sonner";
+
+export interface AvailabilityDay {
+  day: string;
+  openTime?: string;
+  closeTime?: string;
+  isAvailable?: boolean;
+}
 
 interface DateStepProps {
   selectedDate: string;
@@ -10,6 +18,7 @@ interface DateStepProps {
   startDate?: string;
   endDate?: string;
   professionalName?: string;
+  availability?: AvailabilityDay[];
 }
 
 export default function DateStep({
@@ -19,9 +28,16 @@ export default function DateStep({
   startDate,
   endDate,
   professionalName = "Specialist",
+  availability = [],
 }: DateStepProps) {
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const formatLocalYYYYMMDD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const todayStr = formatLocalYYYYMMDD(today);
 
   // Format helper for YYYY-MM-DD
   const formatYYYYMMDD = (dStr?: string) => {
@@ -68,15 +84,68 @@ export default function DateStep({
       ? `Until ${endHumanStr}`
       : null;
 
-  // Auto-initialize selectedDate to minAvailableStr if currently empty or outside range
-  useEffect(() => {
-    if (minAvailableStr) {
-      const activeStart = minAvailableStr < todayStr ? todayStr : minAvailableStr;
-      if (!selectedDate || selectedDate < activeStart || (maxAvailableStr && selectedDate > maxAvailableStr)) {
-        setSelectedDate(activeStart);
+  // Day of week helper (e.g. 0 -> "Sunday", 1 -> "Monday")
+  const getDayNameFromDate = (d: Date) => {
+    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d.getDay()];
+  };
+
+  // Check if a given date string is an off-day based on salon/professional availability
+  const isOffDayFromDateStr = (dateStr: string): boolean => {
+    if (!availability || availability.length === 0) return false;
+    try {
+      const parts = dateStr.split("-").map(Number);
+      if (parts.length === 3) {
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        const dayName = getDayNameFromDate(d);
+        const match = availability.find(
+          (item) => item.day?.toLowerCase() === dayName.toLowerCase()
+        );
+        if (match) {
+          if (match.isAvailable === false) return true;
+          if (match.openTime === "00:00" && match.closeTime === "00:00") return true;
+        }
       }
+    } catch {
+      return false;
     }
-  }, [minAvailableStr, maxAvailableStr]);
+    return false;
+  };
+
+  // Check if a date string is open and bookable
+  const isDateBookable = (dateStr: string): boolean => {
+    if (!dateStr || dateStr < todayStr) return false;
+    if (minAvailableStr && dateStr < minAvailableStr) return false;
+    if (maxAvailableStr && dateStr > maxAvailableStr) return false;
+    if (isOffDayFromDateStr(dateStr)) return false;
+    return true;
+  };
+
+  // Find the first available open day starting from a given date
+  const findFirstOpenDate = (fromStr: string): string => {
+    try {
+      const parts = fromStr.split("-").map(Number);
+      let curr = new Date(parts[0], parts[1] - 1, parts[2]);
+      for (let i = 0; i < 60; i++) {
+        const candidateStr = formatLocalYYYYMMDD(curr);
+        if (isDateBookable(candidateStr)) {
+          return candidateStr;
+        }
+        curr.setDate(curr.getDate() + 1);
+      }
+    } catch {
+      return fromStr;
+    }
+    return fromStr;
+  };
+
+  // Auto-initialize selectedDate to the first valid open day (skipping off-days & past dates)
+  useEffect(() => {
+    const baseStart = minAvailableStr && minAvailableStr > todayStr ? minAvailableStr : todayStr;
+    if (!selectedDate || !isDateBookable(selectedDate)) {
+      const firstOpen = findFirstOpenDate(baseStart);
+      setSelectedDate(firstOpen);
+    }
+  }, [minAvailableStr, maxAvailableStr, availability, selectedDate]);
 
   // Calendar View Month/Year state
   const initialRefDateStr = selectedDate || (minAvailableStr && minAvailableStr >= todayStr ? minAvailableStr : todayStr);
@@ -150,6 +219,10 @@ export default function DateStep({
   const handleCustomDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (val) {
+      if (isOffDayFromDateStr(val)) {
+        toast.error("The selected date is an off-day (closed). Please choose an open operating day.");
+        return;
+      }
       setSelectedDate(val);
       const newD = new Date(val + "T00:00:00");
       if (!isNaN(newD.getTime())) {
@@ -270,7 +343,8 @@ export default function DateStep({
               const isSelected = selectedDate === dateStr;
               const past = isPastDay(day);
               const outsideRange = isOutsideAvailableRange(day);
-              const isDayDisabled = past || outsideRange;
+              const offDay = isOffDayFromDateStr(dateStr);
+              const isDayDisabled = past || outsideRange || offDay;
 
               return (
                 <button
@@ -278,20 +352,73 @@ export default function DateStep({
                   type="button"
                   disabled={isDayDisabled}
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`h-10 sm:h-12 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center cursor-pointer border ${
+                  title={
+                    offDay
+                      ? "Closed / Off-Day"
+                      : past
+                      ? "Past date"
+                      : outsideRange
+                      ? "Outside available window"
+                      : "Available"
+                  }
+                  className={`h-10 sm:h-12 rounded-xl text-xs sm:text-sm font-bold transition-all flex flex-col items-center justify-center cursor-pointer border relative ${
                     isSelected
                       ? "bg-[#D99722] text-white border-[#D99722] shadow-md ring-2 ring-[#D99722]/40"
-                      : isDayDisabled
+                      : offDay
+                      ? "bg-rose-500/5 text-rose-500/40 border-rose-500/20 cursor-not-allowed opacity-40 line-through decoration-rose-500/30"
+                      : past || outsideRange
                       ? "bg-muted/20 text-muted-foreground/30 border-transparent cursor-not-allowed opacity-30"
                       : "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-foreground"
                   }`}
                 >
-                  {day}
+                  <span>{day}</span>
+                  {offDay && !past && (
+                    <span className="text-[8px] font-semibold text-rose-500/70 uppercase tracking-tighter leading-none">
+                      Closed
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
+
+        {/* Weekly Operating Hours & Schedule Summary */}
+        {availability && availability.length > 0 && (
+          <div className="pt-4 border-t border-border/50 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-[#D99722]" />
+              <span className="text-xs font-bold text-foreground">
+                Operating Schedule
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                (Closed/off-days are disabled)
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              {availability.map((av) => {
+                const isOpen = av.isAvailable !== false && av.openTime !== av.closeTime && av.openTime !== "00:00";
+                return (
+                  <div
+                    key={av.day}
+                    className={`p-2 rounded-xl border text-center text-xs flex flex-col justify-center transition-colors ${
+                      isOpen
+                        ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/20"
+                        : "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20 opacity-70"
+                    }`}
+                  >
+                    <span className="font-extrabold uppercase text-[10px] tracking-wide block">
+                      {av.day.slice(0, 3)}
+                    </span>
+                    <span className="text-[10px] font-semibold mt-0.5">
+                      {isOpen ? `${av.openTime} - ${av.closeTime}` : "Closed"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {selectedDate && (
