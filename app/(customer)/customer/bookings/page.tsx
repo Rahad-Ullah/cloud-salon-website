@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Clock, CheckCircle2, AlertCircle, MessageSquare, Loader2 } from "lucide-react";
 import { useGetMyAppointmentQuery } from "@/features/appointment/appointmentApi";
 import { useCreateChatMutation } from "@/features/chat/chatApi";
+import { formatAppointmentStatus, getAppointmentStatusBadgeStyle } from "@/utils/appointment";
+import { AppointmentStatus } from "@/types";
 
 function CustomerBookingsContent() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
@@ -70,7 +72,12 @@ function CustomerBookingsContent() {
       (salon.logo && salon.logo.trim() !== "" ? salon.logo : "");
 
     const startsAtDate = item.startsAt ? new Date(item.startsAt) : new Date();
-    const isPast = startsAtDate < new Date() || item.status === "completed" || item.status === "cancelled";
+    const isPast =
+      startsAtDate < new Date() ||
+      item.status === AppointmentStatus.Completed ||
+      item.status === AppointmentStatus.Cancelled ||
+      item.status === AppointmentStatus.AutoCancelled ||
+      item.status === AppointmentStatus.Rejected;
 
     // Extract target professional user ID for chat creation
     const proUserId =
@@ -249,8 +256,8 @@ function CustomerBookingsContent() {
                       Payment: {booking.paymentStatus}
                     </span>
 
-                    <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent text-muted-foreground capitalize border border-border">
-                      Status: {booking.status}
+                    <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${getAppointmentStatusBadgeStyle(booking.status)}`}>
+                      Status: {formatAppointmentStatus(booking.status)}
                     </span>
                   </div>
                 </div>
