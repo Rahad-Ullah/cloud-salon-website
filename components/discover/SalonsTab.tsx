@@ -199,6 +199,8 @@ export default function SalonsTab() {
                       src={salon.img}
                       alt={salon.name}
                       size="lg"
+                      iconType="scissors"
+                      label="Salon"
                       showLabel
                       className="group-hover:scale-105 transition-transform duration-500"
                     />

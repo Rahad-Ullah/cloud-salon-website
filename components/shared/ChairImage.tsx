@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Armchair } from "lucide-react";
+import { Armchair, Scissors } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChairImageProps {
@@ -14,20 +14,36 @@ interface ChairImageProps {
   showLabel?: boolean;
   size?: "sm" | "md" | "lg";
   fallbackIcon?: React.ReactNode;
+  iconType?: "chair" | "scissors";
+  label?: string;
 }
 
 export default function ChairImage({
   src,
-  alt = "Salon Space",
+  alt = "Salon",
   className = "w-full h-full object-cover",
   containerClassName,
   iconClassName,
   showLabel = false,
   size = "md",
   fallbackIcon,
+  iconType,
+  label,
 }: ChairImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // If iconType is explicitly provided, respect it.
+  // Otherwise, default to "chair" only for dedicated chair/workspace listings, and "scissors" for salon cards.
+  const isExplicitChair =
+    Boolean(alt) &&
+    (alt.toLowerCase().includes("chair") ||
+      alt.toLowerCase().includes("workspace") ||
+      alt.toLowerCase().includes("booth") ||
+      alt.toLowerCase().includes("station"));
+
+  const effectiveIconType = iconType || (isExplicitChair ? "chair" : "scissors");
+  const effectiveLabel = label || (effectiveIconType === "scissors" ? "Salon" : "Salon Space");
 
   const trimmed = typeof src === "string" ? src.trim() : "";
   const isValid =
@@ -53,7 +69,7 @@ export default function ChairImage({
         containerClassName
       )}
     >
-      {/* Fallback with Armchair icon */}
+      {/* Fallback with Scissors or Armchair icon */}
       <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-muted-foreground pointer-events-none">
         <div
           className={cn(
@@ -66,22 +82,36 @@ export default function ChairImage({
           )}
         >
           {fallbackIcon || (
-            <Armchair
-              className={cn(
-                "text-[#D99722]",
-                isSmall
-                  ? "w-3.5 h-3.5"
-                  : isLarge
-                    ? "w-6 h-6 sm:w-7 sm:h-7"
-                    : "w-4.5 h-4.5 sm:w-5 sm:h-5",
-                iconClassName
-              )}
-            />
+            effectiveIconType === "scissors" ? (
+              <Scissors
+                className={cn(
+                  "text-[#D99722]",
+                  isSmall
+                    ? "w-3.5 h-3.5"
+                    : isLarge
+                      ? "w-6 h-6 sm:w-7 sm:h-7"
+                      : "w-4.5 h-4.5 sm:w-5 sm:h-5",
+                  iconClassName
+                )}
+              />
+            ) : (
+              <Armchair
+                className={cn(
+                  "text-[#D99722]",
+                  isSmall
+                    ? "w-3.5 h-3.5"
+                    : isLarge
+                      ? "w-6 h-6 sm:w-7 sm:h-7"
+                      : "w-4.5 h-4.5 sm:w-5 sm:h-5",
+                  iconClassName
+                )}
+              />
+            )
           )}
         </div>
         {showLabel && !isSmall && (
           <span className="text-[10px] font-medium text-muted-foreground/80 tracking-wide mt-1.5 hidden sm:block">
-            Salon Space
+            {effectiveLabel}
           </span>
         )}
       </div>

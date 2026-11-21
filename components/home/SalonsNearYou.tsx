@@ -87,6 +87,8 @@ export default function SalonsNearYou() {
                     alt={salon.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     size="lg"
+                    iconType="scissors"
+                    label="Salon"
                     showLabel
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/30 pointer-events-none" />
@@ -117,6 +119,7 @@ export default function SalonsNearYou() {
                           alt={salon.name}
                           className="w-full h-full object-cover"
                           size="sm"
+                          iconType="scissors"
                         />
                       </div>
                     </Link>

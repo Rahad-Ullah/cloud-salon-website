@@ -177,6 +177,8 @@ export default function ProfessionalsTab() {
                       src={salonMainImg}
                       alt={salon.name || "Salon cover"}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      iconType="scissors"
+                      label="Salon"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/30" />
                   </Link>
