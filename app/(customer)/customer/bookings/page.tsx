@@ -12,13 +12,24 @@ import { formatAppointmentStatus, getAppointmentStatusBadgeStyle } from "@/utils
 import { AppointmentStatus } from "@/types";
 
 function CustomerBookingsContent() {
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
-  const [messagingProId, setMessagingProId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">(
+    tabParam === "past" ? "past" : "upcoming"
+  );
+  const [messagingProId, setMessagingProId] = useState<string | null>(null);
+
   const { data: appointmentsRes, isLoading } = useGetMyAppointmentQuery(undefined);
   const [createChat] = useCreateChatMutation();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "past" || tab === "upcoming") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment") || searchParams.get("status");
