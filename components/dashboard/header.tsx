@@ -21,11 +21,13 @@ const languageOptions = [
 interface DashboardHeaderProps {
   config: DashboardConfig;
   onOpenMobileMenu: () => void;
+  isSalonOwner?: boolean;
 }
 
 export default function DashboardHeader({
   config,
   onOpenMobileMenu,
+  isSalonOwner: propIsSalonOwner,
 }: DashboardHeaderProps) {
   const pathname = usePathname();
   const token = useSelector((state: { auth?: { token?: string | null; user?: any } }) => state.auth?.token);
@@ -53,6 +55,39 @@ export default function DashboardHeader({
   const storedUser = typeof window !== "undefined" ? getUser() : null;
   const storedDisplayName = typeof window !== "undefined" ? localStorage.getItem("userDisplayName") : null;
   const currentUser = profileData || user || storedUser;
+
+  const isSalonOwnerFromApi =
+    profileData?.isSalonOwner ??
+    profileData?.user?.isSalonOwner ??
+    profileResponse?.data?.isSalonOwner ??
+    profileResponse?.data?.user?.isSalonOwner ??
+    profileResponse?.isSalonOwner;
+  const isSalonOwnerFromUser = currentUser?.isSalonOwner ?? currentUser?.user?.isSalonOwner;
+  const storedIsSalonOwner = typeof window !== "undefined" ? localStorage.getItem("isSalonOwner") : null;
+
+  const isSalonOwner = Boolean(
+    propIsSalonOwner !== undefined
+      ? propIsSalonOwner
+      : isSalonOwnerFromApi !== undefined
+      ? isSalonOwnerFromApi
+      : isSalonOwnerFromUser !== undefined
+      ? isSalonOwnerFromUser
+      : storedIsSalonOwner !== null
+      ? storedIsSalonOwner === "true"
+      : false
+  );
+
+  const displayRole = isSalonOwner
+    ? "Salon Owner"
+    : currentUser?.role || config.role;
+
+  const roleBadgeText = isSalonOwner
+    ? "SALON OWNER"
+    : config.role.toUpperCase();
+
+  const roleBadgeColor = isSalonOwner
+    ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
+    : config.roleBadgeColor;
 
   const { data: notificationRes } = useGetAllNotificationQuery(undefined, {
     pollingInterval: 60000,
@@ -172,9 +207,9 @@ export default function DashboardHeader({
             {getPageTitle()}
           </h1>
           <span
-            className={`hidden xs:inline-flex items-center px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border shrink-0 ${config.roleBadgeColor}`}
+            className={`hidden xs:inline-flex items-center px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border shrink-0 ${roleBadgeColor}`}
           >
-            {config.role.toUpperCase()}
+            {roleBadgeText}
           </span>
         </div>
       </div>
@@ -250,7 +285,7 @@ export default function DashboardHeader({
             <span className="text-sm font-semibold text-foreground notranslate" translate="no">
               {displayName}
             </span>
-            <span className="text-xs text-muted-foreground capitalize">{currentUser?.role || config.role}</span>
+            <span className="text-xs text-muted-foreground capitalize">{displayRole}</span>
           </div>
         </div>
       </div>

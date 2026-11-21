@@ -143,6 +143,7 @@ export default function DashboardLayout({
         <DashboardHeader
           config={config}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          isSalonOwner={isSalonOwner}
         />
 
         {/* Dynamic Page Content */}

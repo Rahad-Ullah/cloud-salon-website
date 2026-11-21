@@ -47,6 +47,7 @@ export const DASHBOARD_CONFIGS: Record<RoleType, DashboardConfig> = {
       { title: "Calendar", href: "/customer/calendar", icon: Calendar },
       { title: "Messages", href: "/customer/messages", icon: MessageSquare },
       { title: "Favorites", href: "/customer/favorites", icon: Heart },
+      { title: "Reviews", href: "/customer/reviews", icon: Star },
       { title: "Settings", href: "/customer/settings", icon: Settings },
     ],
   },

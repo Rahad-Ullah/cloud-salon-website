@@ -84,8 +84,8 @@ export default function CustomerOverviewPage() {
       !isNaN(numericPrice) && rawPrice !== undefined && rawPrice !== null
         ? `$${numericPrice.toFixed(2)}`
         : rawPrice !== undefined
-        ? `$${rawPrice}`
-        : "$0";
+          ? `$${rawPrice}`
+          : "$0";
 
     const imageUrl =
       (pro.image && pro.image.trim() !== "" ? pro.image : "") ||
@@ -142,7 +142,7 @@ export default function CustomerOverviewPage() {
       value: overview.totalReviews ?? 0,
       icon: Star,
       color: "text-amber-500 bg-amber-500/10 border-amber-500/20",
-      href: "/customer/bookings?tab=past",
+      href: "/customer/reviews",
     },
     {
       label: "Saved Wishlists",
@@ -289,11 +289,10 @@ export default function CustomerOverviewPage() {
                   <div className="flex items-center justify-between gap-2 pt-1 border-t sm:border-t-0 border-border/40">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
-                          booking.paymentStatus === "paid"
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${booking.paymentStatus === "paid"
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                             : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                        }`}
+                          }`}
                       >
                         {booking.paymentStatus === "paid" ? (
                           <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
