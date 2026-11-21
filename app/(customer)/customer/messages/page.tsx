@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, Suspense } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Send,
+  Search,
   Trash2,
   Loader2,
   RefreshCw,
@@ -28,6 +28,7 @@ function CustomerMessagesContent() {
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(chatIdParam || null);
   const [newMessageText, setNewMessageText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [deleteModalChat, setDeleteModalChat] = useState<{ id: string; name: string } | null>(null);
 
   // Message deletion & Image attachment state
@@ -42,7 +43,14 @@ function CustomerMessagesContent() {
   const { data: profileResponse } = useGetMyProfileQuery(undefined);
   const myProfileId = profileResponse?.data?._id;
 
-  const { data: chatsResponse, isLoading: isChatsLoading, isError: isChatsError, refetch: refetchChats, isFetching: isFetchingChats } = useGetAllChatsQuery(undefined);
+  const {
+    data: chatsResponse,
+    isLoading: isChatsLoading,
+    isError: isChatsError,
+    refetch: refetchChats,
+    isFetching: isFetchingChats,
+  } = useGetAllChatsQuery(undefined);
+
   const [deleteChat, { isLoading: isDeletingChat }] = useDeleteChatMutation();
   const [sendMessage, { isLoading: isSendingMessage }] = useSendMessageMutation();
   const [deleteMessage, { isLoading: isDeletingMessage }] = useDeleteMessageMutation();
@@ -50,7 +58,7 @@ function CustomerMessagesContent() {
 
   const chats = chatsResponse?.data || [];
 
-  // Sync selectedChatId with query param
+  // Update selectedChatId when chatIdParam changes or chats load
   useEffect(() => {
     if (chatIdParam) {
       if (chats.length > 0) {
@@ -71,20 +79,25 @@ function CustomerMessagesContent() {
       } else {
         setSelectedChatId(chatIdParam);
       }
+    } else if (!selectedChatId && chats.length > 0) {
+      setSelectedChatId(chats[0]._id);
     }
-  }, [chatIdParam, chats]);
+  }, [chatIdParam, chats, selectedChatId]);
 
   // Fetch messages for selected chat
-  const { data: messagesResponse, isLoading: isMessagesLoading, refetch: refetchMessages } = useGetMyMessageQuery(
-    selectedChatId,
-    { skip: !selectedChatId }
-  );
+  const {
+    data: messagesResponse,
+    isLoading: isMessagesLoading,
+    refetch: refetchMessages,
+  } = useGetMyMessageQuery(selectedChatId, { skip: !selectedChatId });
 
   const rawMessageList = messagesResponse?.data || messagesResponse || [];
 
   // Sort messages chronologically (oldest at top, newest at bottom)
   const messageList = Array.isArray(rawMessageList)
-    ? [...rawMessageList].sort((a: any, b: any) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
+    ? [...rawMessageList].sort(
+        (a: any, b: any) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+      )
     : [];
 
   // 1. Global Socket Listeners for chat list updates & errors
@@ -135,7 +148,6 @@ function CustomerMessagesContent() {
       refetchChats();
     };
 
-    // Primary event according to Postman docs: getMessage
     socket.on("getMessage", handleIncomingMessage);
     socket.on("getChatList", handleIncomingMessage);
     socket.on("get-message", handleIncomingMessage);
@@ -167,7 +179,7 @@ function CustomerMessagesContent() {
     if (!chat || !chat.participants || !Array.isArray(chat.participants) || chat.participants.length === 0) {
       return {
         id: chat?._id,
-        name: "Professional",
+        name: "Specialist",
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
         isOnline: false,
       };
@@ -178,8 +190,10 @@ function CustomerMessagesContent() {
       : chat.participants[0];
 
     const p = proParticipant || chat.participants[0];
-    const name = `${p.firstName || ""} ${p.lastName || ""}`.trim() || p.email || "Professional";
-    const avatar = p.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80";
+    const name = `${p.firstName || ""} ${p.lastName || ""}`.trim() || p.email || "Specialist";
+    const avatar =
+      p.image ||
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80";
 
     return {
       id: p._id,
@@ -204,6 +218,13 @@ function CustomerMessagesContent() {
       return "";
     }
   };
+
+  // Filter chats by search query
+  const filteredChats = chats.filter((chat: any) => {
+    if (!searchQuery.trim()) return true;
+    const participant = getParticipantInfo(chat);
+    return participant.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
+  });
 
   // Image Selection Handlers
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,11 +251,13 @@ function CustomerMessagesContent() {
 
   const activeChat =
     chats.find((c: any) => c._id === selectedChatId) ||
-    chats.find((c: any) =>
-      Array.isArray(c.participants) &&
-      c.participants.some((p: any) => p._id === selectedChatId || p.id === selectedChatId)
+    chats.find(
+      (c: any) =>
+        Array.isArray(c.participants) &&
+        c.participants.some((p: any) => p._id === selectedChatId || p.id === selectedChatId)
     ) ||
     (selectedChatId ? { _id: selectedChatId } : null);
+
   const activeParticipant = activeChat ? getParticipantInfo(activeChat) : null;
 
   // Send Message logic
@@ -325,7 +348,8 @@ function CustomerMessagesContent() {
       await deleteChat(deleteModalChat.id).unwrap();
       toast.success("Chat deleted successfully!");
       if (selectedChatId === deleteModalChat.id) {
-        setSelectedChatId(null);
+        const remaining = chats.filter((c: any) => c._id !== deleteModalChat.id);
+        setSelectedChatId(remaining.length > 0 ? remaining[0]._id : null);
       }
       setDeleteModalChat(null);
     } catch (err: any) {
@@ -348,339 +372,384 @@ function CustomerMessagesContent() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* ----------------------------------------------------------------- */}
-      {/* VIEW 1: CONVERSATIONS LIST (When no conversation is selected)     */}
-      {/* ----------------------------------------------------------------- */}
-      {!selectedChatId && (
-        <div className="space-y-6">
-          {/* Header Title & Refresh */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="font-extrabold text-3xl sm:text-4xl text-foreground tracking-tight">
-                Messages
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground font-normal tracking-wide">
-                Your conversations with salon professionals
-              </p>
+    <div className="space-y-6 pb-16 font-sans text-foreground">
+      {/* Top Header Row with Title & Refresh */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+        <div>
+          <h1 className="font-extrabold text-3xl sm:text-4xl text-foreground tracking-tight">
+            Messages
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground font-normal mt-1">
+            Your conversations with salon specialists and professionals
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => refetchChats()}
+            disabled={isFetchingChats}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-accent text-xs font-semibold text-foreground flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            title="Refresh Chats"
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetchingChats ? "animate-spin" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Inbox Container - Side by Side layout */}
+      <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[580px]">
+          {/* Left Column: Conversation List */}
+          <div
+            className={`lg:col-span-4 border-r border-border pr-0 lg:pr-6 space-y-4 ${
+              selectedChatId ? "hidden lg:block" : "block"
+            }`}
+          >
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search specialist..."
+                className="w-full bg-accent/50 border border-border rounded-xl pl-9 pr-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+              />
             </div>
-            <button
-              type="button"
-              onClick={() => refetchChats()}
-              disabled={isFetchingChats}
-              className="p-2 rounded-lg border border-border bg-card hover:bg-accent text-xs font-semibold text-foreground flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-              title="Refresh Chats"
-            >
-              <RefreshCw className={`w-4 h-4 ${isFetchingChats ? "animate-spin" : ""}`} />
-            </button>
-          </div>
 
-          {/* Conversations List Container */}
-          <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border shadow-xs">
-            {isChatsLoading ? (
-              <div className="divide-y divide-border/60">
-                {[1, 2, 3, 4].map((n) => (
-                  <div
-                    key={n}
-                    className="p-4 sm:p-5 flex items-center gap-4 animate-pulse"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-muted/70 dark:bg-zinc-800/70 shrink-0" />
-                    <div className="space-y-2 flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="h-4 bg-muted/70 dark:bg-zinc-800/70 rounded w-32" />
-                        <div className="h-3 bg-muted/50 dark:bg-zinc-800/50 rounded w-14" />
+            {/* Chats List */}
+            <div className="space-y-2 overflow-y-auto max-h-[480px] pr-1">
+              {isChatsLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((n) => (
+                    <div
+                      key={n}
+                      className="p-3 rounded-xl border border-border flex items-center gap-3 animate-pulse bg-card"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-muted/70 dark:bg-zinc-800/70 shrink-0" />
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="h-3.5 bg-muted/70 dark:bg-zinc-800/70 rounded w-28" />
+                        <div className="h-2.5 bg-muted/50 dark:bg-zinc-800/50 rounded w-36" />
                       </div>
-                      <div className="h-3 bg-muted/50 dark:bg-zinc-800/50 rounded w-48" />
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : isChatsError ? (
-              <div className="p-8 text-center text-xs text-destructive">
-                Failed to load conversations.
-              </div>
-            ) : chats.length > 0 ? (
-              chats.map((chat: any) => {
-                const participant = getParticipantInfo(chat);
-                const lastMsg = getLastMessageText(chat);
-                const formattedTime = formatDate(chat.updatedAt);
+                  ))}
+                </div>
+              ) : isChatsError ? (
+                <div className="p-6 text-center text-xs text-destructive">
+                  Failed to load chats.
+                </div>
+              ) : filteredChats.length > 0 ? (
+                filteredChats.map((chat: any) => {
+                  const isSelected = selectedChatId === chat._id;
+                  const participant = getParticipantInfo(chat);
+                  const lastMsg = getLastMessageText(chat);
+                  const formattedTime = formatDate(chat.updatedAt);
 
-                return (
-                  <div
-                    key={chat._id}
-                    onClick={() => setSelectedChatId(chat._id)}
-                    className="group p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-accent/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                      {/* Avatar */}
-                      <div className="relative shrink-0">
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden bg-accent border border-border">
-                          <Image
-                            src={participant.avatar}
-                            alt={participant.name}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
+                  return (
+                    <div
+                      key={chat._id}
+                      onClick={() => setSelectedChatId(chat._id)}
+                      className={`group p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? "bg-primary/10 border-primary shadow-xs"
+                          : "bg-accent/30 border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                          <div className="w-11 h-11 rounded-full overflow-hidden relative bg-muted border border-border">
+                            <Image
+                              src={participant.avatar}
+                              alt={participant.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                          {chat.unreadCount && chat.unreadCount > 0 ? (
+                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-background">
+                              {chat.unreadCount}
+                            </span>
+                          ) : null}
                         </div>
-                        {chat.unreadCount && chat.unreadCount > 0 ? (
-                          <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-background">
-                            {chat.unreadCount}
-                          </span>
-                        ) : null}
+
+                        {/* Content Preview */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <h4 className="font-semibold text-xs sm:text-sm text-foreground truncate">
+                              {participant.name}
+                            </h4>
+                            <span className="text-[10px] text-muted-foreground shrink-0">
+                              {formattedTime}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
+                            {lastMsg}
+                          </p>
+                        </div>
                       </div>
 
-                      {/* Name & Preview Text */}
-                      <div className="space-y-0.5 min-w-0 flex-1">
-                        <h3 className="font-bold text-base text-foreground truncate">
-                          {participant.name}
-                        </h3>
-                        <p className="text-xs sm:text-sm leading-tight text-muted-foreground truncate">
-                          {lastMsg}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Timestamp & Delete Action */}
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-muted-foreground">
-                        {formattedTime}
-                      </span>
+                      {/* Delete Action Icon */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleteModalChat({ id: chat._id, name: participant.name });
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all cursor-pointer"
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all cursor-pointer shrink-0"
                         title="Delete Chat"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="p-12 text-center text-xs text-muted-foreground italic">
-                No conversations found.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ----------------------------------------------------------------- */}
-      {/* VIEW 2: CHAT CONVERSATION VIEW (When a conversation is selected)  */}
-      {/* ----------------------------------------------------------------- */}
-      {selectedChatId && activeParticipant && (
-        <div className="space-y-4">
-          {/* Top Bar with Back Button & Selected Professional Info */}
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedChatId(null)}
-                className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
-              </button>
-
-              <div className="flex items-center gap-3 ml-2">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-accent border border-border">
-                  <Image
-                    src={activeParticipant.avatar}
-                    alt={activeParticipant.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="font-bold text-base sm:text-lg text-foreground leading-tight">
-                    {activeParticipant.name}
-                  </h2>
-                  {activeParticipant.isOnline ? (
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
-                      Online
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">Offline</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Header Delete Action */}
-            <button
-              type="button"
-              onClick={() => setDeleteModalChat({ id: selectedChatId, name: activeParticipant.name })}
-              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-medium"
-              title="Delete Conversation"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Delete</span>
-            </button>
-          </div>
-
-          {/* Main Messages Thread Box */}
-          <div className="bg-card border h-[calc(100vh-220px)] min-h-[500px] border-border rounded-2xl p-4 sm:p-6 flex flex-col justify-between gap-4 shadow-xs">
-            {/* Scrollable Messages Container */}
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-              {isMessagesLoading ? (
-                <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  <span className="text-xs text-muted-foreground">Loading messages...</span>
-                </div>
-              ) : messageList.length > 0 ? (
-                messageList.map((msg: any, idx: number) => {
-                  const senderId = typeof msg.sender === "object" ? msg.sender?._id : msg.sender;
-                  const isMyMessage = myProfileId
-                    ? senderId === myProfileId
-                    : (msg.isMyMessage ?? (msg.sender === "user" || msg.role === "customer"));
-
-                  const msgType = msg.type || (msg.content?.startsWith("http") ? "image" : "text");
-                  const timeStr = formatDate(msg.createdAt);
-
-                  return (
-                    <div
-                      key={msg._id || idx}
-                      className={`group/msg flex flex-col ${isMyMessage ? "items-end" : "items-start"
-                        }`}
-                    >
-                      <div className="relative max-w-xs sm:max-w-md flex items-center gap-1.5">
-                        {/* Delete Message Action Button */}
-                        {isMyMessage && !msg.isDeleted && (
-                          <button
-                            type="button"
-                            onClick={() => setDeleteMessageId(msg._id)}
-                            className="opacity-0 group-hover/msg:opacity-100 p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all cursor-pointer shrink-0"
-                            title="Delete Message"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-
-                        {/* Message Content Bubble */}
-                        {msg.isDeleted ? (
-                          <div className="p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed bg-accent/40 text-muted-foreground border border-border italic flex items-center gap-1.5">
-                            <Ban className="w-3.5 h-3.5 shrink-0 opacity-70" />
-                            <span>Message deleted</span>
-                          </div>
-                        ) : (
-                          <div
-                            className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${isMyMessage
-                              ? "bg-primary text-primary-foreground rounded-br-xs shadow-xs"
-                              : "bg-accent text-foreground rounded-bl-xs border border-border"
-                              }`}
-                          >
-                            {msgType === "image" ? (
-                              <div className="relative w-44 h-44 sm:w-56 sm:h-56 rounded-xl overflow-hidden bg-black/10 border border-white/20">
-                                <Image
-                                  src={msg.content}
-                                  alt="Shared Attachment"
-                                  fill
-                                  className="object-cover cursor-pointer hover:scale-105 transition-transform"
-                                  unoptimized
-                                  onClick={() => window.open(msg.content, "_blank")}
-                                />
-                              </div>
-                            ) : (
-                              <span>{msg.content || msg.text || ""}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Time & Read Status */}
-                      {timeStr && (
-                        <span className="text-[11px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
-                          {timeStr}
-                          {msg.isSeen && isMyMessage && <span className="text-primary font-bold">✓✓</span>}
-                        </span>
-                      )}
-                    </div>
                   );
                 })
               ) : (
-                <div className="p-12 text-center text-xs text-muted-foreground italic">
-                  No messages yet. Send a message to start the conversation!
+                <div className="p-10 text-center text-xs text-muted-foreground italic">
+                  No conversations found.
                 </div>
               )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Selected Image Attachment Preview Bar */}
-            {imagePreviewUrl && (
-              <div className="px-4 py-2 bg-accent/60 border border-border rounded-xl flex items-center justify-between animate-in fade-in duration-150">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-border bg-muted">
-                    <Image src={imagePreviewUrl} alt="Attachment Preview" fill className="object-cover" unoptimized />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground truncate max-w-[180px]">
-                      {selectedImageFile?.name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">Ready to send as image</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearSelectedImage}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-card rounded-md transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {/* Input Bar at Bottom */}
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageSelect}
-                accept="image/*"
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploadingImage || isSendingMessage}
-                className="p-3 text-muted-foreground hover:text-foreground hover:bg-accent border border-border rounded-xl transition-colors cursor-pointer shrink-0 disabled:opacity-50"
-                title="Attach Image"
-              >
-                <LucideImage className="w-4 h-4" />
-              </button>
-
-              <input
-                type="text"
-                value={newMessageText}
-                onChange={(e) => setNewMessageText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder={selectedImageFile ? "Press Send to upload image..." : "Type a message..."}
-                className="flex-1 bg-accent border border-border rounded-xl px-4 py-3 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-primary"
-              />
-
-              <button
-                type="button"
-                onClick={handleSendMessage}
-                disabled={isSendingMessage || isUploadingImage || (!newMessageText.trim() && !selectedImageFile)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 disabled:opacity-50 shadow-sm"
-              >
-                {isSendingMessage || isUploadingImage ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                <span>Send</span>
-              </button>
             </div>
           </div>
+
+          {/* Right Column: Chat Box / Messaging Interface */}
+          <div
+            className={`lg:col-span-8 flex flex-col justify-between pl-0 lg:pl-2 min-h-[500px] ${
+              selectedChatId ? "flex" : "hidden lg:flex"
+            }`}
+          >
+            {selectedChatId && activeParticipant ? (
+              <>
+                {/* Chat Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    {/* Mobile Back Button */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedChatId(null)}
+                      className="lg:hidden p-1.5 rounded-lg border border-border bg-accent text-foreground hover:bg-accent/80 transition-colors cursor-pointer mr-1"
+                      title="Back to conversation list"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden bg-muted shrink-0 border border-border">
+                      <Image
+                        src={activeParticipant.avatar}
+                        alt={activeParticipant.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm sm:text-base text-foreground">
+                        {activeParticipant.name}
+                      </h3>
+                      {activeParticipant.isOnline ? (
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Online
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">Offline</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Header Delete Action */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDeleteModalChat({ id: selectedChatId, name: activeParticipant.name })
+                    }
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-medium"
+                    title="Delete Conversation"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
+                </div>
+
+                {/* Messages Scroll Area */}
+                <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2 max-h-[380px] sm:max-h-[420px]">
+                  {isMessagesLoading ? (
+                    <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <span className="text-xs text-muted-foreground">Loading messages...</span>
+                    </div>
+                  ) : messageList.length > 0 ? (
+                    messageList.map((msg: any, idx: number) => {
+                      const senderId = typeof msg.sender === "object" ? msg.sender?._id : msg.sender;
+                      const isMyMessage = myProfileId
+                        ? senderId === myProfileId
+                        : (msg.isMyMessage ??
+                          (msg.sender === "user" ||
+                            msg.role === "customer" ||
+                            msg.sender?.role === "customer"));
+                      const msgType = msg.type || (msg.content?.startsWith("http") ? "image" : "text");
+                      const timeStr = formatDate(msg.createdAt);
+
+                      return (
+                        <div
+                          key={msg._id || idx}
+                          className={`group/msg flex flex-col ${isMyMessage ? "items-end" : "items-start"}`}
+                        >
+                          <div className="relative max-w-xs sm:max-w-md flex items-center gap-1.5">
+                            {/* Delete Message Action Button */}
+                            {isMyMessage && !msg.isDeleted && (
+                              <button
+                                type="button"
+                                onClick={() => setDeleteMessageId(msg._id)}
+                                className="opacity-0 group-hover/msg:opacity-100 p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all cursor-pointer shrink-0"
+                                title="Delete Message"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
+                            {/* Message Content Bubble */}
+                            {msg.isDeleted ? (
+                              <div className="p-3 rounded-2xl text-xs sm:text-sm leading-relaxed bg-accent/40 text-muted-foreground border border-border italic flex items-center gap-1.5">
+                                <Ban className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                                <span>Message deleted</span>
+                              </div>
+                            ) : (
+                              <div
+                                className={`p-3 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                                  isMyMessage
+                                    ? "bg-primary text-primary-foreground rounded-br-xs shadow-xs"
+                                    : "bg-accent text-foreground rounded-bl-xs border border-border"
+                                }`}
+                              >
+                                {msgType === "image" ? (
+                                  <div className="relative w-44 h-44 sm:w-56 sm:h-56 rounded-xl overflow-hidden bg-black/10 border border-white/20">
+                                    <Image
+                                      src={msg.content}
+                                      alt="Shared Attachment"
+                                      fill
+                                      className="object-cover cursor-pointer hover:scale-105 transition-transform"
+                                      unoptimized
+                                      onClick={() => window.open(msg.content, "_blank")}
+                                    />
+                                  </div>
+                                ) : (
+                                  <span>{msg.content || msg.text || ""}</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Time & Read Status */}
+                          {timeStr && (
+                            <span className="text-[10px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                              {timeStr}
+                              {msg.isSeen && isMyMessage && <span className="text-primary font-bold">✓✓</span>}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-12 text-center text-xs text-muted-foreground italic">
+                      No messages yet. Send a message to start the conversation!
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Selected Image Attachment Preview Bar */}
+                {imagePreviewUrl && (
+                  <div className="px-4 py-2 bg-accent/60 border border-border rounded-xl mb-2 flex items-center justify-between animate-in fade-in duration-150">
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-border bg-muted">
+                        <Image
+                          src={imagePreviewUrl}
+                          alt="Attachment Preview"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-foreground truncate max-w-[180px]">
+                          {selectedImageFile?.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">Ready to send as image</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearSelectedImage}
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-card rounded-md transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Input Bar */}
+                <div className="pt-3 border-t border-border flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage || isSendingMessage}
+                    className="p-3 text-muted-foreground hover:text-foreground hover:bg-accent border border-border rounded-xl transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                    title="Attach Image"
+                  >
+                    <LucideImage className="w-4 h-4" />
+                  </button>
+
+                  <input
+                    type="text"
+                    value={newMessageText}
+                    onChange={(e) => setNewMessageText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                    placeholder={
+                      selectedImageFile
+                        ? "Press Send to upload image..."
+                        : `Reply to ${activeParticipant.name}...`
+                    }
+                    className="flex-1 bg-accent/50 border border-border rounded-xl px-4 py-3 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-card transition-all"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleSendMessage}
+                    disabled={
+                      isSendingMessage ||
+                      isUploadingImage ||
+                      (!newMessageText.trim() && !selectedImageFile)
+                    }
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm shrink-0 disabled:opacity-50"
+                  >
+                    {isSendingMessage || isUploadingImage ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    <span>Send</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
+                <MessageSquare className="w-12 h-12 mb-3 text-muted-foreground/50" />
+                <p className="text-sm font-medium">Select a conversation to start chatting.</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {/* DELETE CHAT CONFIRMATION MODAL */}
       {deleteModalChat && (
@@ -690,15 +759,13 @@ function CustomerMessagesContent() {
               <div className="p-2.5 rounded-full bg-destructive/10">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-lg text-foreground">
-                Delete Conversation?
-              </h3>
+              <h3 className="font-bold text-lg text-foreground">Delete Conversation?</h3>
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               Are you sure you want to delete your conversation with{" "}
-              <span className="font-semibold text-foreground">{deleteModalChat.name}</span>?
-              This action cannot be undone and will permanently remove this chat.
+              <span className="font-semibold text-foreground">{deleteModalChat.name}</span>? This
+              action cannot be undone and will permanently remove this chat.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-border">
@@ -774,12 +841,14 @@ function CustomerMessagesContent() {
 
 export default function CustomerMessagesPage() {
   return (
-    <Suspense fallback={
-      <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        <span className="text-xs text-muted-foreground">Loading messages...</span>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <span className="text-xs text-muted-foreground">Loading messages...</span>
+        </div>
+      }
+    >
       <CustomerMessagesContent />
     </Suspense>
   );
