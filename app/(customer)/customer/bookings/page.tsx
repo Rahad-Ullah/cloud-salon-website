@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import Image from "next/image";
 import ChairImage from "@/components/shared/ChairImage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";

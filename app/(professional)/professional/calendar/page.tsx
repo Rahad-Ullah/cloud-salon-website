@@ -62,7 +62,7 @@ export default function ProfessionalCalendarPage() {
       return "bg-emerald-600 text-white dark:bg-emerald-500/25 dark:text-emerald-300 border border-emerald-500/40";
     }
     if (s === "cancelled") {
-      return "bg-rose-600 text-white dark:bg-rose-500/25 dark:text-rose-300 border border-rose-500/40 line-through opacity-75";
+      return "bg-rose-600 text-white dark:bg-rose-500/25 dark:text-rose-300 border border-rose-500/40 opacity-75";
     }
     // pending
     return "bg-amber-500 text-white dark:bg-amber-500/25 dark:text-amber-300 border border-amber-500/40";

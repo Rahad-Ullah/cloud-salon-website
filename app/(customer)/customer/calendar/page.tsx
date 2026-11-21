@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetMyAppointmentQuery } from "@/features/appointment/appointmentApi";
+import { AppointmentStatus } from "@/types";
+import { formatAppointmentStatus } from "@/utils/appointment";
 
 type CalendarView = "Month" | "Week" | "Day";
 
@@ -27,15 +29,30 @@ export default function CustomerCalendarPage() {
 
   const appointmentsList = response?.data || [];
 
-  const getStatusBadgeStyle = (status: string) => {
-    const s = (status || "pending").toLowerCase();
-    if (s === "confirmed") {
-      return "bg-emerald-600 text-white dark:bg-emerald-500/25 dark:text-emerald-300 border border-emerald-500/40";
+  const getStatusBadgeStyle = (status?: string | AppointmentStatus | null) => {
+    const s = String(status || "").toLowerCase().trim();
+    switch (s) {
+      case AppointmentStatus.Confirmed:
+      case "confirmed":
+      case AppointmentStatus.Completed:
+      case "completed":
+        return "bg-emerald-600 text-white dark:bg-emerald-500/25 dark:text-emerald-300 border border-emerald-500/40";
+      case AppointmentStatus.Active:
+      case "active":
+        return "bg-blue-600 text-white dark:bg-blue-500/25 dark:text-blue-300 border border-blue-500/40";
+      case AppointmentStatus.Cancelled:
+      case "cancelled":
+      case AppointmentStatus.AutoCancelled:
+      case "auto_cancelled":
+      case "autocancelled":
+      case AppointmentStatus.Rejected:
+      case "rejected":
+        return "bg-rose-600 text-white dark:bg-rose-500/25 dark:text-rose-300 border border-rose-500/40 opacity-75";
+      case AppointmentStatus.Pending:
+      case "pending":
+      default:
+        return "bg-amber-500 text-white dark:bg-amber-500/25 dark:text-amber-300 border border-amber-500/40";
     }
-    if (s === "cancelled") {
-      return "bg-rose-600 text-white dark:bg-rose-500/25 dark:text-rose-300 border border-rose-500/40 line-through opacity-75";
-    }
-    return "bg-amber-500 text-white dark:bg-amber-500/25 dark:text-amber-300 border border-amber-500/40";
   };
 
   const formatTime = (dateStr?: string) => {
@@ -162,11 +179,15 @@ export default function CustomerCalendarPage() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="font-medium text-foreground">Confirmed</span>
+              <span className="font-medium text-foreground">Confirmed / Completed</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-blue-500" />
+              <span className="font-medium text-foreground">Active</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-rose-500" />
-              <span className="font-medium text-foreground">Cancelled</span>
+              <span className="font-medium text-foreground">Cancelled / Rejected</span>
             </div>
           </div>
 
@@ -281,13 +302,13 @@ export default function CustomerCalendarPage() {
                                 key={appt._id}
                                 onClick={() => setSelectedAppointment(appt)}
                                 className={`w-full text-[11px] font-semibold p-1.5 rounded-md shadow-xs leading-tight flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-all ${statusStyle}`}
-                                title={`Click for appointment details (${appt.status})`}
+                                title={`Click for appointment details (${formatAppointmentStatus(appt.status)})`}
                               >
                                 <span className="truncate">
                                   {proName} · {formatTime(appt.startsAt || appt.scheduledAt)}
                                 </span>
-                                <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-black/20 font-bold ml-1 shrink-0">
-                                  {appt.status || "pending"}
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/20 font-bold ml-1 shrink-0">
+                                  {formatAppointmentStatus(appt.status)}
                                 </span>
                               </div>
                             );
@@ -335,8 +356,8 @@ export default function CustomerCalendarPage() {
                             <span className="text-xs font-bold font-mono">
                               {appt.uid || appt._id?.slice(-6)}
                             </span>
-                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-black/20">
-                              {appt.status || "pending"}
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/20">
+                              {formatAppointmentStatus(appt.status)}
                             </span>
                           </div>
 
@@ -392,8 +413,8 @@ export default function CustomerCalendarPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-base">{proName}</span>
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-black/20">
-                            {statusNormalized}
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/20">
+                            {formatAppointmentStatus(appt.status)}
                           </span>
                         </div>
                         <p className="text-xs opacity-90">{serviceName}</p>
@@ -451,7 +472,7 @@ export default function CustomerCalendarPage() {
                 {/* Status & Payment Banner */}
                 <div className={`p-3 rounded-xl flex items-center justify-between text-xs font-semibold ${getStatusBadgeStyle(selectedAppointment.status)}`}>
                   <div className="flex items-center gap-2">
-                    <span>Status: {selectedAppointment.status?.toUpperCase() || "PENDING"}</span>
+                    <span>Status: {formatAppointmentStatus(selectedAppointment.status)}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-black/20 font-bold capitalize">
                       Payment: {selectedAppointment.paymentStatus || "unpaid"}
                     </span>
