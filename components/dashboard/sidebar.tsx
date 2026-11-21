@@ -7,6 +7,8 @@ import { useSelector } from "react-redux";
 import { LogOut, X, Loader2 } from "lucide-react";
 import { NavItem, RoleType } from "./nav-config";
 import Image from "next/image";
+import ThemeToggle from "@/components/shared/theme-toggle";
+import { Combobox } from "@/components/ui/combobox";
 import { useGetAllChatsQuery } from "@/features/chat/chatApi";
 import { useGetMyAppointmentQuery } from "@/features/appointment/appointmentApi";
 import { removeStorage } from "@/utils/storage";
@@ -17,6 +19,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+const languageOptions = [
+  { value: "en", label: "English" },
+  { value: "es", label: "Español" },
+];
 
 interface DashboardSidebarProps {
   role: RoleType;
@@ -34,6 +41,23 @@ export default function DashboardSidebar({
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const [currentLangCode, setCurrentLangCode] = useState(() => {
+    if (typeof document !== "undefined") {
+      const match = document.cookie.match(/googtrans=\/en\/([a-z]{2})/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return "en";
+  });
+
+  const changeLanguage = (code: string) => {
+    if (typeof window !== "undefined" && (window as any).__applyTranslate) {
+      (window as any).__applyTranslate(code);
+      setCurrentLangCode(code);
+    }
+  };
 
 
 
@@ -74,22 +98,24 @@ export default function DashboardSidebar({
       >
         {/* Header / Brand Logo */}
         <div className="relative flex items-center justify-center h-16 sm:h-20 px-6 border-b border-white/10 shrink-0">
-          <Link href="/" className="flex items-center justify-center group">
+          <Link href="/" className="flex items-center justify-center group py-1">
             {/* Light Mode Logo */}
             <Image
               src="/icons/Light_Mode.png"
-              width={140}
-              height={40}
+              width={240}
+              height={190}
               alt="The Cloud Salon"
-              className="h-9 w-auto object-contain block dark:hidden"
+              className="h-12 sm:h-16 w-auto object-contain block dark:hidden group-hover:scale-105 transition-transform duration-200"
+              priority
             />
             {/* Dark Mode Logo */}
             <Image
               src="/icons/Dark_Mode.png"
-              width={140}
-              height={40}
+              width={240}
+              height={190}
               alt="The Cloud Salon"
-              className="h-9 w-auto object-contain hidden dark:block"
+              className="h-12 sm:h-16 w-auto object-contain hidden dark:block group-hover:scale-105 transition-transform duration-200"
+              priority
             />
           </Link>
 
@@ -155,6 +181,35 @@ export default function DashboardSidebar({
             );
           })}
         </nav>
+
+        {/* Mobile Preferences Section: Theme Toggle & Language Switcher */}
+        <div className="p-4 border-t border-white/10 lg:hidden space-y-2">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            Preferences
+          </p>
+          <div className="space-y-2">
+            {/* Row 1: Theme */}
+            <div className="flex items-center justify-between bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+              <span className="text-xs text-gray-300 font-medium">Theme</span>
+              <ThemeToggle className="h-8 w-8 rounded-lg border-white/20 bg-white/10 hover:bg-white/20 text-white" />
+            </div>
+
+            {/* Row 2: Language */}
+            <div className="flex items-center justify-between bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+              <span className="text-xs text-gray-300 font-medium">Language</span>
+              <Combobox
+                options={languageOptions}
+                value={currentLangCode}
+                onChange={changeLanguage}
+                triggerClassName="h-8 px-2.5 w-[115px] rounded-lg border-white/20 bg-white/10 hover:bg-white/20 text-xs font-semibold text-white shadow-2xs notranslate shrink-0"
+                contentClassName="notranslate"
+                labelClassName="text-xs font-semibold notranslate"
+                align="end"
+                noTranslate
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Logout Footer Section */}
         <div className="p-4 border-t border-white/10">
