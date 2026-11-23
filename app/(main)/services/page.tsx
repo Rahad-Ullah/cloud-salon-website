@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -28,9 +28,12 @@ interface CategoryItem {
 
 const ITEMS_PER_PAGE = 8;
 
-export default function ServicesPage() {
+function ServicesContent() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const urlSearchTerm = searchParams.get("searchTerm") || searchParams.get("search") || searchParams.get("q") || "";
+
+  const [searchQuery, setSearchQuery] = useState(urlSearchTerm);
   const [selectedCategoryPill, setSelectedCategoryPill] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const gridTopRef = useRef<HTMLDivElement>(null);
@@ -39,6 +42,13 @@ export default function ServicesPage() {
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
   const hasDraggedRef = useRef(false);
+
+  useEffect(() => {
+    setSearchQuery(urlSearchTerm);
+    if (urlSearchTerm) {
+      setCurrentPage(1);
+    }
+  }, [urlSearchTerm]);
 
   const { data: categoriesRes, isLoading } = useGetAllCategoryQuery({});
 
@@ -581,5 +591,19 @@ export default function ServicesPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
+          <Loader2 className="w-8 h-8 animate-spin text-[#D99722]" />
+        </div>
+      }
+    >
+      <ServicesContent />
+    </Suspense>
   );
 }

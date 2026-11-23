@@ -9,7 +9,10 @@ export const profesionalApi = baseApi.injectEndpoints({
                 if (params && typeof params === 'object') {
                     Object.keys(params).forEach((key) => {
                         if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
-                            cleanedParams[key] = params[key];
+                            // Strip keys that cause backend validation errors
+                            if (key !== 'location' && key !== 'loc') {
+                                cleanedParams[key] = params[key];
+                            }
                         }
                     });
                 }

@@ -6,10 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { GooglePlacesInput, GooglePlaceResult } from "@/components/ui/google-places-input";
+import { fastGeocode, fastReverseGeocode } from "@/lib/geocode";
 import { useGetAllProfessionalQuery } from "@/features/profesional/profesionalApi";
 import { useGetAllCategoryQuery } from "@/features/category/category";
 import {
-  Search,
   X,
   User,
   Building2,
@@ -24,19 +24,18 @@ import {
 } from "lucide-react";
 import ChairImage from "@/components/shared/ChairImage";
 
+const GOOGLE_PLACES_GEOCODE_TYPES = ["geocode"];
+
 function ProfessionalsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryScrollRef = useRef<HTMLDivElement>(null);
 
-  const urlSearchTerm = searchParams.get("searchTerm") || searchParams.get("q") || "";
   const urlServiceCategory = searchParams.get("serviceCategory") || searchParams.get("category") || searchParams.get("categoryId") || "";
   const urlLatitude = searchParams.get("latitude") || "";
   const urlLongitude = searchParams.get("longitude") || "";
-  const urlLocation = searchParams.get("location") || searchParams.get("loc") || "";
 
-  const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
-  const [locationAddress, setLocationAddress] = useState(urlLocation);
+  const [locationAddress, setLocationAddress] = useState("");
   const [latitude, setLatitude] = useState<number | string | null>(urlLatitude || null);
   const [longitude, setLongitude] = useState<number | string | null>(urlLongitude || null);
 
@@ -46,44 +45,112 @@ function ProfessionalsContent() {
   const categoryDisplayName = selectedCatObj?.name || selectedCatObj?.title || urlServiceCategory;
 
   useEffect(() => {
-    setSearchTerm(urlSearchTerm);
-    setLocationAddress(urlLocation);
-    setLatitude(urlLatitude || null);
-    setLongitude(urlLongitude || null);
-  }, [urlSearchTerm, urlLocation, urlLatitude, urlLongitude]);
+    if (!urlLatitude && !urlLongitude) {
+      setLocationAddress("");
+      setLatitude(null);
+      setLongitude(null);
+      try {
+        sessionStorage.removeItem("professionals_search_address");
+      } catch {}
+    } else {
+      setLatitude(urlLatitude);
+      setLongitude(urlLongitude);
+      try {
+        const saved = sessionStorage.getItem("professionals_search_address");
+        if (saved) {
+          setLocationAddress(saved);
+        } else {
+          fastReverseGeocode(urlLatitude, urlLongitude).then((addr) => {
+            if (addr) setLocationAddress(addr);
+          });
+        }
+      } catch {}
+    }
+  }, [urlLatitude, urlLongitude]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const sp = new URLSearchParams(window.location.search);
+      setLatitude(sp.get("latitude") || null);
+      setLongitude(sp.get("longitude") || null);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Compute active coordinates immediately from state for 0ms query dispatch
+  const activeLat = latitude !== null && latitude !== "" ? String(latitude) : urlLatitude;
+  const activeLng = longitude !== null && longitude !== "" ? String(longitude) : urlLongitude;
+
+  // Send ONLY latitude and longitude (and serviceCategory if selected) to the backend
   const queryParams: Record<string, string> = {};
-  if (urlSearchTerm) queryParams.searchTerm = urlSearchTerm;
+  if (activeLat) queryParams.latitude = activeLat;
+  if (activeLng) queryParams.longitude = activeLng;
   if (urlServiceCategory) queryParams.serviceCategory = urlServiceCategory;
-  if (urlLatitude) queryParams.latitude = urlLatitude;
-  if (urlLongitude) queryParams.longitude = urlLongitude;
 
   // API Query
-  const { data: professionalsRes, isLoading } = useGetAllProfessionalQuery(queryParams);
+  const { data: professionalsRes, isLoading, isFetching } = useGetAllProfessionalQuery(queryParams);
 
   const handlePlaceSelect = (place: GooglePlaceResult) => {
     setLocationAddress(place.address);
     setLatitude(place.lat);
     setLongitude(place.lng);
-  };
 
-  const handleSearch = () => {
+    try {
+      sessionStorage.setItem("professionals_search_address", place.address);
+    } catch {}
+
     const params = new URLSearchParams();
-    if (searchTerm.trim()) params.set("searchTerm", searchTerm.trim());
-    if (locationAddress.trim()) params.set("location", locationAddress.trim());
-    if (latitude) params.set("latitude", String(latitude));
-    if (longitude) params.set("longitude", String(longitude));
+    if (place.lat != null) params.set("latitude", String(place.lat));
+    if (place.lng != null) params.set("longitude", String(place.lng));
     if (urlServiceCategory) params.set("serviceCategory", urlServiceCategory);
 
-    router.push(`/professionals?${params.toString()}`);
+    const queryStr = params.toString();
+    const targetUrl = queryStr ? `/professionals?${queryStr}` : "/professionals";
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", targetUrl);
+    }
+    router.replace(targetUrl, { scroll: false });
+  };
+
+  const handleSearch = async () => {
+    let currentLat = latitude;
+    let currentLng = longitude;
+
+    // Fast geocode using Google Maps JS SDK (in-memory) instead of slow Nominatim
+    if ((!currentLat || !currentLng) && locationAddress.trim()) {
+      const geo = await fastGeocode(locationAddress.trim());
+      if (geo) {
+        currentLat = geo.lat;
+        currentLng = geo.lng;
+        setLatitude(currentLat);
+        setLongitude(currentLng);
+      }
+    }
+
+    if (locationAddress.trim()) {
+      try {
+        sessionStorage.setItem("professionals_search_address", locationAddress.trim());
+      } catch {}
+    }
+
+    const params = new URLSearchParams();
+    if (currentLat != null) params.set("latitude", String(currentLat));
+    if (currentLng != null) params.set("longitude", String(currentLng));
+    if (urlServiceCategory) params.set("serviceCategory", urlServiceCategory);
+
+    const queryStr = params.toString();
+    const targetUrl = queryStr ? `/professionals?${queryStr}` : "/professionals";
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", targetUrl);
+    }
+    router.replace(targetUrl, { scroll: false });
   };
 
   const handleSelectCategory = (catId: string) => {
     const params = new URLSearchParams();
-    if (searchTerm.trim()) params.set("searchTerm", searchTerm.trim());
-    if (locationAddress.trim()) params.set("location", locationAddress.trim());
-    if (latitude) params.set("latitude", String(latitude));
-    if (longitude) params.set("longitude", String(longitude));
+    if (activeLat) params.set("latitude", activeLat);
+    if (activeLng) params.set("longitude", activeLng);
     if (catId) params.set("serviceCategory", catId);
 
     const queryStr = params.toString();
@@ -114,10 +181,32 @@ function ProfessionalsContent() {
   };
 
   const clearSearch = () => {
-    setSearchTerm("");
     setLocationAddress("");
     setLatitude(null);
     setLongitude(null);
+    try {
+      sessionStorage.removeItem("professionals_search_address");
+    } catch {}
+    const params = new URLSearchParams();
+    if (urlServiceCategory) params.set("serviceCategory", urlServiceCategory);
+    const queryStr = params.toString();
+    const targetUrl = queryStr ? `/professionals?${queryStr}` : "/professionals";
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", targetUrl);
+    }
+    router.replace(targetUrl, { scroll: false });
+  };
+
+  const clearAllFilters = () => {
+    setLocationAddress("");
+    setLatitude(null);
+    setLongitude(null);
+    try {
+      sessionStorage.removeItem("professionals_search_address");
+    } catch {}
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", "/professionals");
+    }
     router.push("/professionals");
   };
 
@@ -206,53 +295,49 @@ function ProfessionalsContent() {
                   </p>
                 </div>
 
-                {/* Search Bar */}
+                {/* Search Bar (Area / Location Autocomplete) */}
                 <div className="pt-1.5 w-full max-w-152">
-                  <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex flex-col gap-2">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-
-                      <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all">
-                        <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <input
-                          type="text"
-                          placeholder="Specialist name or service..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          className="w-full bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-                        />
-                        {searchTerm && (
-                          <button
-                            type="button"
-                            onClick={() => setSearchTerm("")}
-                            className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-                            title="Clear search"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="flex-1">
-                        <GooglePlacesInput
-                          placeholder="City, area or address..."
-                          value={locationAddress}
-                          onPlaceSelectAction={handlePlaceSelect}
-                          onTextChange={(val) => setLocationAddress(val)}
-                          onKeyDown={handleKeyDown}
-                          className="!h-10 !rounded-xl text-xs sm:text-sm"
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleSearch}
-                        className="px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
-                      >
-                        <span>Find Specialists</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                  <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-2 w-full">
+                    <div className="flex-1 min-w-0">
+                      <GooglePlacesInput
+                        placeholder="Search by city, town, or street..."
+                        value={locationAddress}
+                        types={GOOGLE_PLACES_GEOCODE_TYPES}
+                        onPlaceSelectAction={handlePlaceSelect}
+                        onTextChange={(val) => {
+                          setLocationAddress(val);
+                          if (!val.trim()) {
+                            setLatitude(null);
+                            setLongitude(null);
+                            try {
+                              sessionStorage.removeItem("professionals_search_address");
+                            } catch {}
+                            if (urlLatitude || urlLongitude || latitude || longitude) {
+                              const params = new URLSearchParams();
+                              if (urlServiceCategory) params.set("serviceCategory", urlServiceCategory);
+                              const q = params.toString();
+                              const targetUrl = q ? `/professionals?${q}` : "/professionals";
+                              if (typeof window !== "undefined") {
+                                window.history.replaceState(null, "", targetUrl);
+                              }
+                              router.replace(targetUrl, { scroll: false });
+                            }
+                          }
+                        }}
+                        onKeyDown={handleKeyDown}
+                        className="!h-10 !rounded-xl !bg-accent/40 !border-border/50 focus:!border-[#D99722] focus:!bg-background text-xs sm:text-sm"
+                      />
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSearch}
+                      className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                    >
+                      <span className="sm:hidden">Search</span>
+                      <span className="hidden sm:inline">Find Specialists</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -327,28 +412,44 @@ function ProfessionalsContent() {
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs">
           <div>
-            <h3 className="text-base font-bold text-foreground">Verified Beauty &amp; Grooming Specialists</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground">Verified Beauty &amp; Grooming Specialists</h3>
+              {isFetching && (
+                <span className="text-[11px] text-[#D99722] font-semibold animate-pulse">Updating...</span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-0.5">{rawData.length} active professionals ready for booking</p>
-            {(urlSearchTerm || urlServiceCategory || urlLocation) && (
+            {(urlServiceCategory || (activeLat && activeLng)) && (
               <div className="flex flex-wrap items-center gap-2 mt-3">
-                {urlSearchTerm && (
-                  <span className="bg-[#D99722]/10 text-[#D99722] border border-[#D99722]/20 text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
-                    Search: &ldquo;{urlSearchTerm}&rdquo;
-                  </span>
-                )}
                 {urlServiceCategory && (
                   <span className="bg-[#D99722]/10 text-[#D99722] border border-[#D99722]/20 text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
                     Category: {categoryDisplayName}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory("")}
+                      className="hover:text-foreground ml-1 cursor-pointer"
+                      title="Clear category filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </span>
                 )}
-                {urlLocation && (
+                {activeLat && activeLng && (
                   <span className="bg-[#D99722]/10 text-[#D99722] border border-[#D99722]/20 text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
-                    Location: {urlLocation}
+                    Location: {locationAddress || `${activeLat}, ${activeLng}`}
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="hover:text-foreground ml-1 cursor-pointer"
+                      title="Clear location filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </span>
                 )}
                 <button
                   type="button"
-                  onClick={clearSearch}
+                  onClick={clearAllFilters}
                   className="text-xs font-bold text-red-500 hover:underline flex items-center gap-1 ml-1 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -377,7 +478,7 @@ function ProfessionalsContent() {
             </p>
             <button
               type="button"
-              onClick={clearSearch}
+              onClick={clearAllFilters}
               className="px-6 py-2.5 bg-[#D99722] hover:bg-[#C2841B] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer inline-flex items-center gap-2"
             >
               <span>Clear All Filters</span>

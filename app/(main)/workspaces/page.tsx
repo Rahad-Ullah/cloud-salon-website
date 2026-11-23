@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import {
   Armchair,
@@ -27,17 +27,62 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { getToken, getUser } from "@/utils/storage";
 import ChairImage from "@/components/shared/ChairImage";
+import { GooglePlacesInput, GooglePlaceResult } from "@/components/ui/google-places-input";
+import { fastGeocode, fastReverseGeocode } from "@/lib/geocode";
 import { useGetAllChairsQuery } from "@/features/chair/chairApi";
 import { useCreateChairRentalMutation } from "@/features/chairRental/chairRentalApi";
 
-export default function WorkspacesPage() {
+const GOOGLE_PLACES_GEOCODE_TYPES = ["geocode"];
+
+function WorkspacesContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const token = useSelector((state: { auth?: { token?: string } }) => state.auth?.token);
   const user = useSelector((state: { auth?: { user?: any } }) => state.auth?.user);
 
+  const urlLatitude = searchParams.get("latitude") || "";
+  const urlLongitude = searchParams.get("longitude") || "";
+
+  const [locationAddress, setLocationAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | string | null>(urlLatitude || null);
+  const [longitude, setLongitude] = useState<number | string | null>(urlLongitude || null);
+
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!urlLatitude && !urlLongitude) {
+      setLocationAddress("");
+      setLatitude(null);
+      setLongitude(null);
+      try {
+        sessionStorage.removeItem("workspaces_search_address");
+      } catch {}
+    } else {
+      setLatitude(urlLatitude);
+      setLongitude(urlLongitude);
+      try {
+        const saved = sessionStorage.getItem("workspaces_search_address");
+        if (saved) {
+          setLocationAddress(saved);
+        } else {
+          fastReverseGeocode(urlLatitude, urlLongitude).then((addr) => {
+            if (addr) setLocationAddress(addr);
+          });
+        }
+      } catch {}
+    }
+  }, [urlLatitude, urlLongitude]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const sp = new URLSearchParams(window.location.search);
+      setLatitude(sp.get("latitude") || null);
+      setLongitude(sp.get("longitude") || null);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Quick booking modal state
   const [selectedChair, setSelectedChair] = useState<any | null>(null);
@@ -64,15 +109,88 @@ export default function WorkspacesPage() {
   const [startDate, setStartDate] = useState(getTodayString());
   const [endDate, setEndDate] = useState(getFutureString(2));
 
-  // Fetch all chairs from API using useGetAllChairsQuery with searchTerm and static active status
-  const { data: chairsRes, isLoading, isFetching, refetch } = useGetAllChairsQuery({
+  // Compute active coordinates immediately from state for 0ms query dispatch
+  const activeLat = latitude !== null && latitude !== "" ? String(latitude) : urlLatitude;
+  const activeLng = longitude !== null && longitude !== "" ? String(longitude) : urlLongitude;
+
+  // Fetch chairs from API using coordinates
+  const queryParams: Record<string, any> = {
     page,
     limit: 12,
-    searchTerm: searchTerm.trim() ? searchTerm.trim() : undefined,
     status: "active",
-  });
+  };
+  if (activeLat) queryParams.latitude = activeLat;
+  if (activeLng) queryParams.longitude = activeLng;
+
+  const { data: chairsRes, isLoading, isFetching, refetch } = useGetAllChairsQuery(queryParams);
 
   const [createChairRental, { isLoading: isBookingLoading }] = useCreateChairRentalMutation();
+
+  const handlePlaceSelect = (place: GooglePlaceResult) => {
+    setLocationAddress(place.address);
+    setLatitude(place.lat);
+    setLongitude(place.lng);
+
+    try {
+      sessionStorage.setItem("workspaces_search_address", place.address);
+    } catch {}
+
+    const params = new URLSearchParams();
+    if (place.lat != null) params.set("latitude", String(place.lat));
+    if (place.lng != null) params.set("longitude", String(place.lng));
+
+    const queryStr = params.toString();
+    const targetUrl = queryStr ? `/workspaces?${queryStr}` : "/workspaces";
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", targetUrl);
+    }
+    router.replace(targetUrl, { scroll: false });
+  };
+
+  const handleSearch = async () => {
+    let currentLat = latitude;
+    let currentLng = longitude;
+
+    if ((!currentLat || !currentLng) && locationAddress.trim()) {
+      const geo = await fastGeocode(locationAddress.trim());
+      if (geo) {
+        currentLat = geo.lat;
+        currentLng = geo.lng;
+        setLatitude(currentLat);
+        setLongitude(currentLng);
+      }
+    }
+
+    if (locationAddress.trim()) {
+      try {
+        sessionStorage.setItem("workspaces_search_address", locationAddress.trim());
+      } catch {}
+    }
+
+    const params = new URLSearchParams();
+    if (currentLat != null) params.set("latitude", String(currentLat));
+    if (currentLng != null) params.set("longitude", String(currentLng));
+
+    const queryStr = params.toString();
+    const targetUrl = queryStr ? `/workspaces?${queryStr}` : "/workspaces";
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", targetUrl);
+    }
+    router.replace(targetUrl, { scroll: false });
+  };
+
+  const clearSearch = () => {
+    setLocationAddress("");
+    setLatitude(null);
+    setLongitude(null);
+    try {
+      sessionStorage.removeItem("workspaces_search_address");
+    } catch {}
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", "/workspaces");
+    }
+    router.replace("/workspaces", { scroll: false });
+  };
 
   const rawChairs = Array.isArray(chairsRes?.data) ? chairsRes.data : [];
   const pagination = chairsRes?.pagination || {
@@ -88,37 +206,14 @@ export default function WorkspacesPage() {
     );
   };
 
-  // Client-side filtering (ensuring only active chairs and matching search term)
+  // Filter for active chairs
   const filteredChairs = useMemo(() => {
     let result = [...rawChairs];
-
-    // Filter for active chairs
     result = result.filter(
       (item: any) => (item.status || item.chair?.status || "active").toLowerCase() === "active"
     );
-
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter((item: any) => {
-        const chairName = (item.name || item.chair?.name || "").toLowerCase();
-        const chairLocation = (item.location || item.chair?.location || "").toLowerCase();
-        const salonName = (item.salon?.name || "").toLowerCase();
-        const salonEmail = (item.salon?.email || "").toLowerCase();
-        const uid = (item.uid || item.chair?.uid || "").toLowerCase();
-        const desc = (item.description || item.chair?.description || "").toLowerCase();
-        return (
-          chairName.includes(q) ||
-          chairLocation.includes(q) ||
-          salonName.includes(q) ||
-          salonEmail.includes(q) ||
-          uid.includes(q) ||
-          desc.includes(q)
-        );
-      });
-    }
-
     return result;
-  }, [rawChairs, searchTerm]);
+  }, [rawChairs]);
 
   const calculateDays = (start: string, end: string) => {
     if (!start || !end) return 1;
@@ -289,38 +384,41 @@ export default function WorkspacesPage() {
                 </p>
               </div>
 
-              {/* Search Bar */}
+              {/* Search Bar (Area / Location Autocomplete) */}
               <div className="pt-1.5 w-full max-w-152">
                 <div className="bg-card border border-border shadow-xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-2 w-full">
-                  <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-accent/40 rounded-xl border border-border/50 focus-within:border-[#D99722] focus-within:bg-background transition-all min-w-0">
-                    <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search by salon name, chair name, or location..."
-                      className="w-full bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  <div className="flex-1 min-w-0">
+                    <GooglePlacesInput
+                      placeholder="Search by city, town, or street..."
+                      value={locationAddress}
+                      types={GOOGLE_PLACES_GEOCODE_TYPES}
+                      onPlaceSelectAction={handlePlaceSelect}
+                      onTextChange={(val) => {
+                        setLocationAddress(val);
+                        if (!val.trim()) {
+                          setLatitude(null);
+                          setLongitude(null);
+                          try {
+                            sessionStorage.removeItem("workspaces_search_address");
+                          } catch {}
+                          if (urlLatitude || urlLongitude || latitude || longitude) {
+                            if (typeof window !== "undefined") {
+                              window.history.replaceState(null, "", "/workspaces");
+                            }
+                            router.replace("/workspaces", { scroll: false });
+                          }
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSearch();
+                      }}
+                      className="!h-10 !rounded-xl !bg-accent/40 !border-border/50 focus:!border-[#D99722] focus:!bg-background text-xs sm:text-sm"
                     />
-                    {searchTerm && (
-                      <button
-                        type="button"
-                        onClick={() => setSearchTerm("")}
-                        className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer shrink-0"
-                        title="Clear search"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      const el = document.getElementById("available-workspaces");
-                      if (el) {
-                        el.scrollIntoView({ behavior: "smooth" });
-                      }
-                    }}
+                    onClick={handleSearch}
                     className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
                   >
                     <span className="sm:hidden">Search</span>
@@ -368,12 +466,38 @@ export default function WorkspacesPage() {
       <div id="available-workspaces" className="container mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8 space-y-4 sm:space-y-6">
 
         {/* Results Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Armchair className="w-5 h-5 text-[#D99722]" />
-            <h2 className="text-base sm:text-lg font-bold text-foreground">
-              Available Work Spaces ({filteredChairs.length})
-            </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-2xl border border-border shadow-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Armchair className="w-5 h-5 text-[#D99722]" />
+              <h2 className="text-base sm:text-lg font-bold text-foreground">
+                Available Work Spaces ({filteredChairs.length})
+              </h2>
+            </div>
+
+            {activeLat && activeLng && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-[#D99722]/10 text-[#D99722] border border-[#D99722]/20 text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  Location: {locationAddress || `${activeLat}, ${activeLng}`}
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="hover:text-foreground ml-1 cursor-pointer"
+                    title="Clear location filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="text-[11px] font-bold text-red-500 hover:underline flex items-center gap-0.5 ml-1 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                  Reset Filters
+                </button>
+              </div>
+            )}
           </div>
           {isFetching && (
             <span className="text-xs text-[#D99722] animate-pulse">Updating...</span>
@@ -395,13 +519,22 @@ export default function WorkspacesPage() {
             <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
               <Armchair className="w-6 h-6" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-3">
               <h3 className="text-lg font-bold text-foreground">
                 No workspaces found
               </h3>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                No workspaces matched your search criteria. Please adjust your search keywords.
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                No active workspaces were found matching your criteria. Try adjusting your location or clearing filters.
               </p>
+              {urlLatitude && urlLongitude && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="px-5 py-2 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <span>Clear All Filters</span>
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -724,5 +857,13 @@ export default function WorkspacesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WorkspacesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <WorkspacesContent />
+    </Suspense>
   );
 }
