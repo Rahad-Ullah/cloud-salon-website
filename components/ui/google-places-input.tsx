@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
-import { MapPin, Loader2, Navigation } from 'lucide-react';
+import { MapPin, Loader2, Navigation, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { envConfig } from '../../envConfig';
 
@@ -40,7 +40,7 @@ export function GooglePlacesInput({
   onKeyDown,
   className,
   country,
-  types,
+  types = ['geocode'],
   error,
   variant = 'light',
 }: GooglePlacesInputProps) {
@@ -73,16 +73,13 @@ export function GooglePlacesInput({
 
   useEffect(() => {
     const getApiKey = async () => {
+      if (apiKey) return;
       const config = await envConfig();
-      const key =
-        config.googleMapsApiKey ||
-        process.env.GOOGLE_MAPS_API_KEY ||
-        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-        '';
-      setApiKey(key);
+      const key = config.googleMapsApiKey || process.env.GOOGLE_MAPS_API_KEY || '';
+      if (key) setApiKey(key);
     };
     getApiKey();
-  }, []);
+  }, [apiKey]);
 
   // Setup Google Places Autocomplete
   useEffect(() => {
@@ -235,6 +232,22 @@ export function GooglePlacesInput({
 
       {isSearchingFallback && (
         <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground z-10" />
+      )}
+
+      {inputVal && !isSearchingFallback && (
+        <button
+          type="button"
+          onClick={() => {
+            isInternalChangeRef.current = true;
+            setInputVal('');
+            setShowSuggestions(false);
+            onTextChange?.('');
+          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer z-10"
+          title="Clear location"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       )}
 
       {/* Fallback Autocomplete Suggestions Dropdown */}

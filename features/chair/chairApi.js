@@ -42,7 +42,10 @@ export const chairApi = baseApi.injectEndpoints({
                 } else if (params && typeof params === 'object') {
                     Object.keys(params).forEach((key) => {
                         if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
-                            cleanedParams[key] = params[key];
+                            // Strip location keys that cause backend Mongoose cast errors
+                            if (key !== 'location' && key !== 'loc') {
+                                cleanedParams[key] = params[key];
+                            }
                         }
                     });
 

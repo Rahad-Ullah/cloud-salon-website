@@ -12,8 +12,12 @@ export default function Hero() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-    router.push(`/discover?searchTerm=${encodeURIComponent(searchQuery.trim())}`);
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      router.push("/services");
+      return;
+    }
+    router.push(`/services?searchTerm=${encodeURIComponent(trimmed)}`);
   };
   const horizontalFeatures = [
     { icon: "/icons/hero/calendar.png", label: "Book Anytime" },
