@@ -31,6 +31,7 @@ import { GooglePlacesInput, GooglePlaceResult } from "@/components/ui/google-pla
 import { fastGeocode, fastReverseGeocode } from "@/lib/geocode";
 import { useGetAllChairsQuery } from "@/features/chair/chairApi";
 import { useCreateChairRentalMutation } from "@/features/chairRental/chairRentalApi";
+import BottomCtaBanner from "@/components/shared/BottomCtaBanner";
 
 const GOOGLE_PLACES_GEOCODE_TYPES = ["geocode"];
 
@@ -704,6 +705,15 @@ function WorkspacesContent() {
             </button>
           </div>
         )}
+
+        <BottomCtaBanner
+          icon={Armchair}
+          badgeText="FOR FREELANCE SPECIALISTS"
+          title="Looking to rent a salon chair or workspace?"
+          description="Learn how independent stylists find luxury salon chairs, book flexible daily or weekly rentals, and serve clients on their own terms."
+          buttonText="See How It Works"
+          buttonHref="/how-it-works?role=professionals"
+        />
       </div>
 
       {/* Book Work Space Dialog Modal */}

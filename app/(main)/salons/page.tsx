@@ -10,6 +10,7 @@ import Link from "next/link";
 import { GooglePlacesInput, GooglePlaceResult } from "@/components/ui/google-places-input";
 import { fastGeocode, fastReverseGeocode } from "@/lib/geocode";
 import { useGetAllSalonsQuery } from "@/features/salon/salonApi";
+import BottomCtaBanner from "@/components/shared/BottomCtaBanner";
 
 const GOOGLE_PLACES_GEOCODE_TYPES = ["geocode"];
 
@@ -455,6 +456,15 @@ function SalonsContent() {
             </div>
           )}
         </div>
+
+        <BottomCtaBanner
+          icon={Building2}
+          badgeText="FOR SALON BUSINESSES"
+          title="Do you own or manage a beauty salon?"
+          description="Discover how easy it is to list your salon storefront, rent out vacant styling chairs, organize staff schedules, and attract new local clients."
+          buttonText="See How It Works"
+          buttonHref="/how-it-works?role=businesses"
+        />
       </section>
     </div>
   );

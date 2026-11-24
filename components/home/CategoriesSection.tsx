@@ -28,7 +28,7 @@ export default function CategoriesSection() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <span className="text-[11px] sm:text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-1">
-              SERVICE CATEGORIES
+              DISCOVER OUR SERVICES
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1C1C1E] dark:text-white tracking-tight">
               What are you looking for?

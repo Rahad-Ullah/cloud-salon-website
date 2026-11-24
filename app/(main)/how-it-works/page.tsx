@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   FileText,
@@ -20,8 +21,38 @@ import RoleStepsTimeline, { StepItem } from "@/components/how-it-works/RoleSteps
 import FaqSection from "@/components/how-it-works/FaqSection";
 import GetStartedCta from "@/components/how-it-works/GetStartedCta";
 
-export default function HowItWorksPage() {
-  const [activeRole, setActiveRole] = useState<RoleType>("customers");
+function parseRole(raw: string | null): RoleType {
+  if (!raw) return "customers";
+  const lower = raw.toLowerCase().trim();
+  if (lower === "professionals" || lower === "professional" || lower === "stylists" || lower === "stylist") {
+    return "professionals";
+  }
+  if (lower === "businesses" || lower === "business" || lower === "salons" || lower === "salon") {
+    return "businesses";
+  }
+  return "customers";
+}
+
+function HowItWorksContent() {
+  const searchParams = useSearchParams();
+  const urlRole = searchParams.get("role") || searchParams.get("tab");
+
+  const [activeRole, setActiveRole] = useState<RoleType>(() => parseRole(urlRole));
+
+  useEffect(() => {
+    const roleFromUrl = parseRole(urlRole);
+    setActiveRole(roleFromUrl);
+  }, [urlRole]);
+
+  const handleRoleChange = (role: RoleType) => {
+    setActiveRole(role);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("role", role);
+      url.searchParams.delete("tab");
+      window.history.replaceState(null, "", url.toString());
+    } catch {}
+  };
 
   // Content per Role
   const roleContent: Record<RoleType, { headerTitle: string; headerSubtitle: string; steps: StepItem[] }> = {
@@ -142,7 +173,7 @@ export default function HowItWorksPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      <Hero activeRole={activeRole} setActiveRole={setActiveRole} />
+      <Hero activeRole={activeRole} setActiveRole={handleRoleChange} />
       <RoleOverviewHeader
         title={currentRoleData.headerTitle}
         subtitle={currentRoleData.headerSubtitle}
@@ -151,5 +182,13 @@ export default function HowItWorksPage() {
       <FaqSection />
       <GetStartedCta />
     </div>
+  );
+}
+
+export default function HowItWorksPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <HowItWorksContent />
+    </Suspense>
   );
 }
