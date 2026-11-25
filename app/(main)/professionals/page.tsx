@@ -21,8 +21,10 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  Scissors,
 } from "lucide-react";
 import ChairImage from "@/components/shared/ChairImage";
+import BottomCtaBanner from "@/components/shared/BottomCtaBanner";
 
 const GOOGLE_PLACES_GEOCODE_TYPES = ["geocode"];
 
@@ -640,6 +642,15 @@ function ProfessionalsContent() {
             })}
           </div>
         )}
+
+        <BottomCtaBanner
+          icon={Scissors}
+          badgeText="FOR INDEPENDENT SPECIALISTS"
+          title="Are you an independent beauty specialist?"
+          description="Learn how Cloud Salon helps you set up a verified portfolio, accept instant online bookings, manage your calendar, and grow your independent clientele."
+          buttonText="See How It Works"
+          buttonHref="/how-it-works?role=professionals"
+        />
       </section>
     </div>
   );

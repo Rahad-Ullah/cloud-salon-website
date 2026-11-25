@@ -14,41 +14,29 @@ export default function GetStartedCta() {
           transition={{ duration: 0.6 }}
           className="space-y-3 sm:space-y-4"
         >
-          {/* Top Sub-tagline */}
-          <span className="text-[11px] sm:text-xs font-bold text-[#D99722] uppercase tracking-[0.2em] block mb-2 sm:mb-3">
-            GET STARTED
-          </span>
-
           {/* Main Headline */}
           <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.12] text-[#1C1C1E] dark:text-white tracking-tight">
-            Ready for Your Next <br />
+            Ready to Experience <br />
             <span className="text-[#B98C44] dark:text-[#D99722]">
-              Appointment?
+              The Cloud Salon?
             </span>
           </h2>
 
           {/* Subtitle */}
-          <p className="text-xs sm:text-sm text-[#66635D] dark:text-zinc-400 font-normal leading-relaxed max-w-lg mx-auto pt-1 pb-4 sm:pb-6">
-            Join thousands of customers discovering and booking beauty services they love.
+          <p className="text-xs sm:text-sm text-[#66635D] dark:text-zinc-400 font-normal leading-relaxed max-w-xl mx-auto pt-1 pb-4 sm:pb-6">
+            Create your account in less than a minute. Whether you&apos;re here to book verified beauty professionals, lease a salon chair, or grow your business, we&apos;re glad to have you with us.
           </p>
 
-          {/* Dual Action CTAs */}
-          <div className="max-w-4xl mx-auto ">
+          {/* Action CTA */}
+          <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-center gap-3 sm:gap-4 pt-1">
-            {/* <Link
-              href="/discover"
-              className=" px-7 sm:px-9 py-3.5 rounded-lg bg-[#D99722] hover:bg-[#A37937] text-white text-xs sm:text-sm font-medium transition-colors shadow-xs text-center shrink-0"
-            >
-              Find a Service
-            </Link> */}
-
-            <Link
-              href="/professionals"
-              className=" px-7 sm:px-9 py-3.5 rounded-lg bg-gray-100 dark:bg-[#242322] hover:bg-[#D5D0C7] dark:hover:bg-[#2F2E2C] text-[#222222] dark:text-zinc-200 text-xs sm:text-sm font-medium transition-colors shadow-2xs border border-black/5 dark:border-white/10 text-center shrink-0"
-            >
-              Explore Professionals
-            </Link>
-          </div>
+              <Link
+                href="/register"
+                className="px-7 sm:px-9 py-3.5 rounded-lg bg-gray-100 dark:bg-[#242322] hover:bg-[#D5D0C7] dark:hover:bg-[#2F2E2C] text-[#222222] dark:text-zinc-200 text-xs sm:text-sm font-medium transition-colors shadow-2xs border border-black/5 dark:border-white/10 text-center shrink-0 cursor-pointer"
+              >
+                GET STARTED
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>

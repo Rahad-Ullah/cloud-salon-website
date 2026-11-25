@@ -14,8 +14,8 @@ import {
   Scissors,
   Loader2,
   X,
-  UserPlus,
 } from "lucide-react";
+import BottomCtaBanner from "@/components/shared/BottomCtaBanner";
 import { useGetAllCategoryQuery } from "@/features/category/category";
 
 interface CategoryItem {
@@ -559,36 +559,16 @@ function ServicesContent() {
         )}
 
         {/* =========================================================================
-            BOTTOM CALL-TO-ACTION BANNER (Matching Client Reference Image)
+            BOTTOM CALL-TO-ACTION BANNER
         ========================================================================= */}
-        <div className="mt-10 sm:mt-20">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#121214] text-white p-5 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6 shadow-xl">
-            {/* Ambient Lighting */}
-            <div className="absolute top-0 right-1/4 w-80 h-80 bg-[#D99722]/15 rounded-full blur-[90px] pointer-events-none" />
-
-            <div className="relative z-10 flex items-center gap-4 sm:gap-5 text-left">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#D99722]/20 text-[#D99722] flex items-center justify-center shrink-0 border border-[#D99722]/40 shadow-inner">
-                <UserPlus className="w-6 h-6 sm:w-7 sm:h-7" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-2xl font-extrabold text-white tracking-tight">
-                  Are you an independent beauty specialist?
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-lg">
-                  Showcase your portfolio, take direct client bookings, rent chairs at luxury salons, and keep 100% of your earnings.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/for-professionals"
-              className="relative z-10 w-full sm:w-auto justify-center px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#D99722] hover:bg-[#C2841B] text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#D99722]/25 transition-all flex items-center gap-2 shrink-0 cursor-pointer active:scale-95"
-            >
-              <span>Join as a Professional</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
+        <BottomCtaBanner
+          icon={Sparkles}
+          badgeText="HOW IT WORKS FOR CLIENTS"
+          title="New to booking beauty services on Cloud Salon?"
+          description="Explore our step-by-step guide on discovering trusted specialists, viewing transparent pricing, choosing your ideal appointment time, and booking with confidence."
+          buttonText="See How It Works"
+          buttonHref="/how-it-works?role=customers"
+        />
       </section>
     </div>
   );

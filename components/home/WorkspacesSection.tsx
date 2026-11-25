@@ -27,7 +27,7 @@ export default function WorkspacesSection() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <span className="text-xs font-bold text-[#D99722] uppercase tracking-widest block mb-1">
-            SALON WORKSPACES &amp; BOOTHS
+            DISCOVER OUR WORKSPACES
           </span>
           <h2 className="text-2xl sm:text-4xl font-bold text-foreground">
             Dedicated Workspaces for Beauty Professionals
