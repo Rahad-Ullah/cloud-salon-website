@@ -3,11 +3,14 @@ import { baseApi } from '../../utils/apiBaseQuery';
 export const appointmentApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         createAppointment: builder.mutation({
-            query: (data) => ({
-                url: "/appointments/create",
-                method: "POST",
-                body: data,
-            }),
+            query: (data) => {
+                const { endsAt: _ignored, ...cleanBody } = data || {};
+                return {
+                    url: "/appointments/create",
+                    method: "POST",
+                    body: cleanBody,
+                };
+            },
             invalidatesTags: ["appointments"],
         }),
 
@@ -22,10 +25,13 @@ export const appointmentApi = baseApi.injectEndpoints({
 
 
         getSingleAppointment: builder.query({
-            query: ({ id }) => ({
-                url: `/appointments/single/${id}`,
-                method: "GET",
-            }),
+            query: (arg) => {
+                const id = typeof arg === "object" && arg?.id ? arg.id : arg;
+                return {
+                    url: `/appointments/single/${id}`,
+                    method: "GET",
+                };
+            },
             providesTags: ["appointments"],
         }),
 

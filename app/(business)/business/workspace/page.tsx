@@ -7,7 +7,6 @@ import {
   Loader2,
   AlertCircle,
   Armchair,
-  Building2,
   Calendar,
   CheckCircle,
   XCircle,
@@ -30,7 +29,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ListSkeleton } from "@/components/ui/skeleton";
+import { formatAppointmentStatus, getAppointmentStatusBadgeStyle } from "@/utils/appointment";
 
 interface ProfessionalInfo {
   _id?: string;
@@ -73,6 +72,10 @@ interface MyRentalItem {
   endDate?: string;
   durationInDays?: number;
   pricing?: {
+    subtotal?: number;
+    discount?: number;
+    platformFee?: number;
+    serviceFee?: number;
     total?: number;
     currency?: string;
   };
@@ -80,16 +83,39 @@ interface MyRentalItem {
   pricePerDayInUSD?: number;
   paymentStatus?: string;
   transaction?: string;
+  cancelReason?: string;
   status?: string;
   uid?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
+type RentalTabType = "All" | "Pending" | "Confirmed" | "Completed" | "Cancelled";
+
+const RENTAL_TABS: RentalTabType[] = ["All", "Pending", "Confirmed", "Completed", "Cancelled"];
+
+function getPaymentBadgeStyle(paymentStatus?: string) {
+  const p = (paymentStatus || "unpaid").toLowerCase();
+  if (p === "paid") {
+    return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+  }
+  if (p === "refunded") {
+    return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
+  }
+  return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+}
+
+function formatMoney(val: any): string {
+  const num = Number(val);
+  if (val === undefined || val === null || isNaN(num)) return "0.00";
+  return num.toFixed(2);
+}
+
 export default function BusinessWorkspacePage() {
   const { data: rentalsData, isLoading: isRentalsLoading, isError, error, refetch } =
     useGetMyRentalsQuery({});
   const [updateChairRental, { isLoading: isUpdating }] = useUpdateChairRentalMutation();
+  const [activeTab, setActiveTab] = useState<RentalTabType>("All");
 
   const [modalState, setModalState] = useState<{
     open: boolean;
@@ -122,8 +148,8 @@ export default function BusinessWorkspacePage() {
       }).unwrap();
       toast.success(
         status === "confirmed"
-          ? "Work space rental approved successfully"
-          : "Work space rental rejected successfully"
+          ? "Workspace rental approved successfully"
+          : "Workspace rental rejected successfully"
       );
       if (selectedRentalDetails && selectedRentalDetails._id === rentalId) {
         setSelectedRentalDetails((prev) => (prev ? { ...prev, status } : null));
@@ -153,22 +179,83 @@ export default function BusinessWorkspacePage() {
     setModalState((prev) => ({ ...prev, open: false }));
   };
 
+  const matchesRentalTab = (rental: MyRentalItem, tab: RentalTabType) => {
+    if (tab === "All") return true;
+    const st = (rental.status || "pending").toLowerCase();
+    if (tab === "Cancelled") {
+      return st === "cancelled" || st === "rejected" || st === "auto_cancelled";
+    }
+    return st === tab.toLowerCase();
+  };
+
+  const filteredRentals = rentalsList.filter((r) => matchesRentalTab(r, activeTab));
+
   return (
     <div className="space-y-6 pb-16">
       {/* Header Section */}
       <div className="space-y-1">
         <h1 className="font-extrabold text-3xl sm:text-4xl text-foreground tracking-tight">
-          Work Space
+          Workspace Bookings
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground font-normal tracking-wide">
-          View your requested and active workspace rentals
+          Review and manage workspace chair rental requests from beauty specialists
         </p>
       </div>
 
+      {/* Status Filter Tabs */}
+      {!isRentalsLoading && !isError && rentalsList.length > 0 && (
+        <div className="border-b border-border flex items-center gap-6 sm:gap-8 text-sm overflow-x-auto">
+          {RENTAL_TABS.map((tab) => {
+            const isActive = activeTab === tab;
+            const isNeg = tab === "Cancelled";
+            const count = rentalsList.filter((r) => matchesRentalTab(r, tab)).length;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`pb-2.5 font-medium transition-all cursor-pointer whitespace-nowrap relative flex items-center gap-2 ${
+                  isActive
+                    ? isNeg
+                      ? "text-destructive"
+                      : "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>{tab}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isActive
+                      ? isNeg
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-primary/15 text-primary"
+                      : "bg-accent text-muted-foreground"
+                  }`}
+                >
+                  {count}
+                </span>
+                {isActive && (
+                  <span
+                    className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-full ${
+                      isNeg ? "bg-destructive" : "bg-primary"
+                    }`}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Main Content */}
       {isRentalsLoading ? (
-        <div className="bg-card border border-border rounded-lg p-2">
-          <ListSkeleton count={3} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+          {[1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className="bg-card border border-border/70 rounded-2xl p-5 h-48 animate-pulse"
+            />
+          ))}
         </div>
       ) : isError ? (
         <div className="p-8 text-center bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -184,25 +271,30 @@ export default function BusinessWorkspacePage() {
             Retry
           </button>
         </div>
-      ) : rentalsList.length === 0 ? (
-        <div className="p-16 text-center bg-card border border-border rounded-lg flex flex-col items-center justify-center space-y-4">
+      ) : filteredRentals.length === 0 ? (
+        <div className="p-16 text-center bg-card border border-border rounded-2xl flex flex-col items-center justify-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
             <Armchair className="w-6 h-6" />
           </div>
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-foreground">
-              No workspace rentals requested
+              {activeTab === "All"
+                ? "No workspace rentals requested"
+                : `No ${activeTab.toLowerCase()} workspace rentals`}
             </h3>
             <p className="text-xs text-muted-foreground max-w-sm">
-              You haven&apos;t rented any salon workspaces yet.
+              {activeTab === "All"
+                ? "No beauty specialists have requested chair rentals at your salon yet."
+                : `You don't have any ${activeTab.toLowerCase()} chair rental bookings at the moment.`}
             </p>
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {rentalsList.map((rental) => {
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+          {filteredRentals.map((rental) => {
             const chairObj = rental.chair;
             const salonObj = typeof rental.salon === "object" ? rental.salon : null;
+            const prof = typeof rental.professional === "object" ? rental.professional : null;
 
             const chairName = chairObj?.name || "Work Station";
             const salonName = salonObj?.name || "Salon Space";
@@ -211,122 +303,182 @@ export default function BusinessWorkspacePage() {
               salonObj?.logo ||
               "";
 
+            const profFullName = prof
+              ? `${prof.firstName || ""} ${prof.lastName || ""}`.trim() || prof.name || prof.email || "Specialist"
+              : "Specialist";
+            const profEmail = prof?.email || "";
+            const profInitials = prof?.firstName
+              ? (prof.firstName[0] + (prof.lastName ? prof.lastName[0] : "")).toUpperCase()
+              : profFullName.slice(0, 2).toUpperCase();
+
             const formattedStart = rental.startDate
               ? new Date(rental.startDate).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
+                  timeZone: "UTC",
+                  month: "short",
+                  day: "numeric",
+                })
               : "N/A";
             const formattedEnd = rental.endDate
               ? new Date(rental.endDate).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
+                  timeZone: "UTC",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
               : "N/A";
 
-            const price = rental.pricing?.total ?? rental.totalPrice ?? (chairObj?.pricePerDayInUSD || 0);
-            const status = rental.status || "pending";
+            const daysCount = rental.durationInDays || 1;
+            const dailyRate = chairObj?.pricePerDayInUSD ?? rental.pricePerDayInUSD;
+            const rawPrice = rental.pricing?.total ?? rental.totalPrice ?? (chairObj?.pricePerDayInUSD || 0);
+            const status = (rental.status || "pending").toLowerCase();
+            const paymentStatus = rental.paymentStatus || "unpaid";
 
             return (
               <div
                 key={rental._id}
-                className="bg-card border border-border rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs"
+                className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 shadow-2xs hover:border-[#D99722]/60 hover:shadow-md transition-all group"
               >
-                {/* Left Side: Thumbnail & Main Info */}
-                <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-16 sm:w-24 sm:h-20 rounded-xl overflow-hidden bg-accent shrink-0 border border-border">
+                {/* Top Body: Chair Thumbnail + Detailed Info */}
+                <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+                  <div className="relative w-full h-44 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-accent shrink-0 border border-border">
                     <ChairImage
                       src={img}
                       alt={chairName}
                       fill
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-base sm:text-lg text-foreground">
-                        {chairName}
-                      </span>
-                      {chairObj?.uid && (
-                        <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded border border-border">
-                          {chairObj.uid}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2">
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-bold text-base sm:text-lg text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-1">
+                          {chairName}
+                        </h3>
+                        <span className="text-[10px] font-mono bg-accent px-2 py-0.5 rounded border border-border text-muted-foreground shrink-0">
+                          #{rental.uid || rental._id?.slice(-6)}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Building2 className="w-3.5 h-3.5 text-[#D99722]" />
-                      <span>{salonName}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-0.5">
-                      <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>
-                        {formattedStart} – {formattedEnd}
-                      </span>
-                      {rental.durationInDays && (
-                        <span className="text-foreground font-medium">
-                          ({rental.durationInDays} days)
+                      </div>
+
+                      {/* Renting Specialist Row */}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <div className="relative w-5 h-5 rounded-full overflow-hidden bg-primary/15 text-primary border border-primary/30 flex items-center justify-center text-[9px] font-bold shrink-0">
+                          {prof?.image ? (
+                            <Image
+                              src={prof.image}
+                              alt={profFullName}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                          ) : (
+                            profInitials
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {profFullName}
                         </span>
-                      )}
+                        {profEmail && (
+                          <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
+                            · {profEmail}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Chair Location / Salon */}
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5 text-[#D99722] shrink-0" />
+                        <span className="truncate">
+                          {chairObj?.location || salonName}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Schedule & Price Row */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                        <Calendar className="w-3.5 h-3.5 text-[#D99722] shrink-0" />
+                        <span>
+                          {formattedStart} – {formattedEnd}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          ({daysCount} {daysCount === 1 ? "day" : "days"})
+                        </span>
+                      </span>
+
+                      <div className="text-right">
+                        <span className="font-extrabold text-base sm:text-lg text-[#D99722]">
+                          ${formatMoney(rawPrice)}
+                        </span>
+                        {dailyRate !== undefined && (
+                          <span className="text-[11px] text-muted-foreground ml-1">
+                            (${formatMoney(dailyRate)}/day)
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Right Side: Price, Status & Actions */}
-                <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-border">
-                  <div className="text-left md:text-right">
-                    <span className="text-xs text-muted-foreground block">Total Amount</span>
-                    <span className="text-base font-bold text-[#D99722]">${price}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* Status Badge */}
+                {/* Footer: Statuses & Action Buttons */}
+                <div className="pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize border ${status === "confirmed"
-                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                        : status === "cancelled" || status === "rejected"
-                          ? "bg-destructive/10 text-destructive border-destructive/20"
-                          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                        }`}
+                      className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${getAppointmentStatusBadgeStyle(
+                        rental.status
+                      )}`}
                     >
-                      {status}
+                      {formatAppointmentStatus(rental.status)}
                     </span>
 
-                    {/* View Details Eye Icon Button */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRentalDetails(rental)}
-                      className="px-2.5 py-2 rounded-md bg-secondary/80 hover:bg-[#D99722]/15 text-foreground hover:text-[#D99722] border border-border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-medium shadow-2xs group active:scale-95"
-                      title="View Details"
+                    <span
+                      className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-bold capitalize ${getPaymentBadgeStyle(
+                        paymentStatus
+                      )}`}
                     >
-                      <Eye className="w-3.5 h-3.5 text-[#D99722] group-hover:scale-110 transition-transform" />
-                    </button>
+                      {paymentStatus.toLowerCase() === "paid" ? (
+                        <CheckCircle className="w-3 h-3 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                      )}
+                      {paymentStatus}
+                    </span>
+                  </div>
 
-                    {/* Admin Action Buttons if Pending */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     {status === "pending" && (
-                      <div className="flex items-center gap-1.5 ml-1">
+                      <>
                         <button
                           type="button"
                           disabled={isUpdating}
                           onClick={() => openConfirmation(rental._id, "confirmed", chairName)}
-                          className="p-2 rounded-md hover:bg-emerald-500/10 text-emerald-600 transition-colors cursor-pointer border border-border disabled:opacity-50"
+                          className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1 shadow-xs disabled:opacity-50"
                           title="Approve Request"
                         >
-                          <CheckCircle className="w-4 h-4" />
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Approve</span>
                         </button>
                         <button
                           type="button"
                           disabled={isUpdating}
                           onClick={() => openConfirmation(rental._id, "cancelled", chairName)}
-                          className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors cursor-pointer border border-border disabled:opacity-50"
+                          className="px-3 py-2 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1 disabled:opacity-50"
                           title="Reject Request"
                         >
-                          <XCircle className="w-4 h-4" />
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>Reject</span>
                         </button>
-                      </div>
+                      </>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRentalDetails(rental)}
+                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View Details</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -350,8 +502,8 @@ export default function BusinessWorkspacePage() {
               )}
               <span>
                 {modalState.action === "confirmed"
-                  ? "Approve Work Space Request"
-                  : "Reject Work Space Request"}
+                  ? "Approve Workspace Request"
+                  : "Reject Workspace Request"}
               </span>
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
@@ -460,14 +612,11 @@ export default function BusinessWorkspacePage() {
 
                   {/* Status Badge */}
                   <span
-                    className={`text-xs px-3 py-1 rounded-full font-semibold capitalize border shrink-0 ${status === "confirmed"
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                        : status === "cancelled" || status === "rejected"
-                          ? "bg-destructive/15 text-destructive border-destructive/30"
-                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                      }`}
+                    className={`text-xs px-3 py-1 rounded-full font-bold shrink-0 ${getAppointmentStatusBadgeStyle(
+                      rental.status
+                    )}`}
                   >
-                    {rental.status || "Pending"}
+                    {formatAppointmentStatus(rental.status)}
                   </span>
                 </div>
 
@@ -620,21 +769,50 @@ export default function BusinessWorkspacePage() {
                       <CreditCard className="w-3.5 h-3.5 text-[#D99722]" />
                       <span>Financial &amp; Payment</span>
                     </span>
-                    <div className="space-y-1 pt-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Billed:</span>
-                        <span className="font-bold text-[#D99722] text-sm">${chairPrice} USD</span>
+                    <div className="space-y-1.5 pt-1">
+                      {rental.pricing?.subtotal !== undefined && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Subtotal:</span>
+                          <span className="font-medium text-foreground">
+                            ${formatMoney(rental.pricing.subtotal)}
+                          </span>
+                        </div>
+                      )}
+                      {Number(rental.pricing?.discount) > 0 && (
+                        <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                          <span>Discount:</span>
+                          <span className="font-medium">-${formatMoney(rental.pricing?.discount)}</span>
+                        </div>
+                      )}
+                      {(rental.pricing?.platformFee !== undefined ||
+                        rental.pricing?.serviceFee !== undefined) && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Platform Fee:</span>
+                          <span className="font-medium text-foreground">
+                            ${formatMoney(rental.pricing?.platformFee ?? rental.pricing?.serviceFee)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1 border-t border-border">
+                        <span className="text-muted-foreground font-semibold">Total Billed:</span>
+                        <span className="font-bold text-[#D99722] text-sm">
+                          ${formatMoney(chairPrice)} USD
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center pt-1">
                         <span className="text-muted-foreground">Payment Status:</span>
-                        <span className="font-semibold capitalize text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded text-[11px]">
-                          {rental.paymentStatus || "Paid"}
+                        <span
+                          className={`font-bold capitalize px-2 py-0.5 rounded-full text-[11px] ${getPaymentBadgeStyle(
+                            rental.paymentStatus
+                          )}`}
+                        >
+                          {rental.paymentStatus || "unpaid"}
                         </span>
                       </div>
                       {rental.transaction && (
                         <div className="flex justify-between pt-1 border-t border-border items-center">
                           <span className="text-muted-foreground">Transaction:</span>
-                          <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[120px]">
+                          <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[140px]">
                             {rental.transaction}
                           </span>
                         </div>
@@ -642,6 +820,15 @@ export default function BusinessWorkspacePage() {
                     </div>
                   </div>
                 </div>
+
+                {rental.cancelReason && (
+                  <div className="p-3.5 rounded-xl bg-destructive/5 border border-destructive/20 text-xs space-y-1">
+                    <span className="font-bold text-destructive uppercase tracking-wider text-[10px]">
+                      Cancellation Reason
+                    </span>
+                    <p className="text-foreground">{rental.cancelReason}</p>
+                  </div>
+                )}
 
                 {/* Modal Footer / Actions */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border">

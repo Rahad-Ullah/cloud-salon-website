@@ -214,10 +214,6 @@ function BookingFlowContent({ params }: { params: Promise<{ id: string }> }) {
       },
     };
 
-    if (selectedSlot?.endsAt) {
-      payload.endsAt = selectedSlot.endsAt;
-    }
-
     try {
       const res = await createAppointment(payload).unwrap();
       if (typeof window !== "undefined") {

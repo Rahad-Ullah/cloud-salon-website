@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ChairImage from "@/components/shared/ChairImage";
@@ -17,6 +17,12 @@ import {
   Armchair,
   Clock,
   ShieldCheck,
+  Eye,
+  CreditCard,
+  ExternalLink,
+  Mail,
+  Phone,
+  Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
@@ -24,11 +30,13 @@ import { useGetMyProfileQuery } from "@/features/profile/profileApi";
 import { useGetAllChairsQuery } from "@/features/chair/chairApi";
 import {
   useGetMyRentalsQuery,
+  useGetSingleChairRentalQuery,
   useCreateChairRentalMutation,
   useUpdateChairRentalMutation,
 } from "@/features/chairRental/chairRentalApi";
 import BusinessWorkspacePage from "@/app/(business)/business/workspace/page";
-import { CardGridSkeleton, ListSkeleton } from "@/components/ui/skeleton";
+import { CardGridSkeleton } from "@/components/ui/skeleton";
+import { formatAppointmentStatus, getAppointmentStatusBadgeStyle } from "@/utils/appointment";
 
 interface SalonInfo {
   _id?: string;
@@ -40,9 +48,14 @@ interface SalonInfo {
   totalReviews?: number;
   address?: {
     line1?: string;
+    line2?: string;
     city?: string;
+    state?: string;
+    postalCode?: string;
     country?: string;
   };
+  email?: string;
+  phone?: string | { countryCode?: string; number?: string };
 }
 
 interface ChairRentalItem {
@@ -63,15 +76,62 @@ interface BookingRecord {
   salon?: SalonInfo | string;
   startDate?: string;
   endDate?: string;
+  durationInDays?: number;
   totalPrice?: number;
   pricePerDayInUSD?: number;
+  paymentStatus?: string;
+  transaction?: any;
   pricing?: {
+    subtotal?: number;
+    discount?: number;
+    platformFee?: number;
+    serviceFee?: number;
     total?: number;
     currency?: string;
   };
   status?: string;
   createdAt?: string;
+  updatedAt?: string;
   uid?: string;
+}
+
+function getPaymentBadgeStyle(paymentStatus?: string) {
+  const p = (paymentStatus || "unpaid").toLowerCase();
+  if (p === "paid") {
+    return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+  }
+  if (p === "refunded") {
+    return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
+  }
+  return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+}
+
+function formatMoney(val: any): string {
+  const num = Number(val);
+  if (val === undefined || val === null || isNaN(num)) return "0.00";
+  return num.toFixed(2);
+}
+
+function formatSalonAddress(address: any): string | null {
+  if (!address) return null;
+  if (typeof address === "string") return address.trim() || null;
+  if (typeof address === "object") {
+    const parts = [address.line1, address.line2, address.city, address.state, address.postalCode, address.country]
+      .filter((p) => typeof p === "string" && p.trim().length > 0);
+    return parts.length > 0 ? parts.join(", ") : null;
+  }
+  return null;
+}
+
+function formatPhoneStr(phone: any): string | null {
+  if (!phone) return null;
+  if (typeof phone === "string") return phone.trim() || null;
+  if (typeof phone === "object") {
+    const code = phone.countryCode ? `${phone.countryCode} ` : "";
+    const num = phone.number || "";
+    return `${code}${num}`.trim() || null;
+  }
+  return null;
 }
 
 export default function ProfessionalWorkspacePage() {
@@ -100,9 +160,30 @@ export default function ProfessionalWorkspacePage() {
   } = useGetMyRentalsQuery({}, { skip: isSalonOwner });
 
   const [createChairRental, { isLoading: isBookingLoading }] = useCreateChairRentalMutation();
+  const [updateChairRental] = useUpdateChairRentalMutation();
 
   // Modal State for Booking a Chair
   const [selectedChair, setSelectedChair] = useState<ChairRentalItem | null>(null);
+  // Modal State for Viewing Rental Details
+  const [selectedRental, setSelectedRental] = useState<BookingRecord | null>(null);
+  const [isCancellingRental, setIsCancellingRental] = useState(false);
+
+  const {
+    data: singleRentalRes,
+    isFetching: isSingleRentalFetching,
+  } = useGetSingleChairRentalQuery(selectedRental?._id, {
+    skip: !selectedRental?._id,
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedRental) {
+        setSelectedRental(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedRental]);
 
   // Timezone-safe local client date strings (YYYY-MM-DD)
   const getTodayString = () => {
@@ -220,7 +301,7 @@ export default function ProfessionalWorkspacePage() {
         return;
       }
 
-      toast.success(res?.message || "Work space booking request sent successfully!");
+      toast.success(res?.message || "Workspace booking request sent successfully!");
       setBookingSuccess(true);
       refetchMyRentals();
 
@@ -248,7 +329,7 @@ export default function ProfessionalWorkspacePage() {
       {/* Header Section */}
       <div className="space-y-1">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-          Work Space
+          Workspace
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground font-normal tracking-wide">
           Find a workspace when you need it
@@ -265,7 +346,7 @@ export default function ProfessionalWorkspacePage() {
               : "text-muted-foreground hover:text-foreground"
             }`}
         >
-          Browse Work Spaces
+          Browse Workspaces
           {activeTab === "browse" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
           )}
@@ -445,7 +526,7 @@ export default function ProfessionalWorkspacePage() {
                           href={`/workspaces/${item._id}`}
                           className="w-full block text-center bg-primary hover:bg-primary/90 active:scale-[0.98] text-primary-foreground py-2.5 rounded-sm font-medium text-xs sm:text-sm transition-all cursor-pointer"
                         >
-                          Book Work Space
+                          Book Workspace
                         </Link>
                       </div>
                     </div>
@@ -459,115 +540,546 @@ export default function ProfessionalWorkspacePage() {
 
       {/* Tab 2: My Bookings */}
       {activeTab === "bookings" && (
-        <div className="space-y-4 pt-2 max-w-5xl">
+        <div className="pt-2">
           {isLoadingRentals ? (
-            <ListSkeleton count={3} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              {[1, 2, 3, 4].map((n) => (
+                <div
+                  key={n}
+                  className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 h-44 animate-pulse"
+                />
+              ))}
+            </div>
           ) : myBookingsList.length > 0 ? (
-            myBookingsList.map((booking) => {
-              const chairObj = typeof booking.chair === "object" ? booking.chair : null;
-              const salonObj = typeof booking.salon === "object" ? booking.salon : null;
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              {myBookingsList.map((booking) => {
+                const chairObj = typeof booking.chair === "object" ? booking.chair : null;
+                const salonObj = typeof booking.salon === "object" ? booking.salon : null;
 
-              const title = chairObj?.name || salonObj?.name || "Work Space";
-              const salonName = salonObj?.name || "Salon";
+                const title = chairObj?.name || salonObj?.name || "Workspace";
+                const salonName = salonObj?.name || "Salon Studio";
+                const locationText =
+                  chairObj?.location ||
+                  formatSalonAddress(salonObj?.address) ||
+                  "Salon Main Floor";
 
-              const img =
-                chairObj?.photo ||
-                salonObj?.photos?.[0] ||
-                salonObj?.logo ||
-                "";
+                const img =
+                  chairObj?.photo ||
+                  salonObj?.photos?.[0] ||
+                  salonObj?.logo ||
+                  "";
 
-              const formattedStart = booking.startDate
-                ? new Date(booking.startDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-                : "";
-              const formattedEnd = booking.endDate
-                ? new Date(booking.endDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-                : "";
-              const dateRangeStr =
-                formattedStart && formattedEnd
-                  ? `${formattedStart} – ${formattedEnd}`
-                  : "Workspace Booking";
+                const formattedStart = booking.startDate
+                  ? new Date(booking.startDate).toLocaleDateString("en-US", {
+                      timeZone: "UTC",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "";
+                const formattedEnd = booking.endDate
+                  ? new Date(booking.endDate).toLocaleDateString("en-US", {
+                      timeZone: "UTC",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "";
+                const dateRangeStr =
+                  formattedStart && formattedEnd
+                    ? `${formattedStart} – ${formattedEnd}`
+                    : "Workspace Booking";
 
-              const priceStr = booking.pricing?.total !== undefined
-                ? `$${booking.pricing.total}`
-                : booking.totalPrice !== undefined
-                ? `$${booking.totalPrice}`
-                : booking.pricePerDayInUSD !== undefined
-                ? `$${booking.pricePerDayInUSD}/day`
-                : "N/A";
+                const daysCount =
+                  booking.durationInDays ||
+                  (booking.startDate && booking.endDate
+                    ? Math.max(
+                        1,
+                        Math.round(
+                          (new Date(booking.endDate).getTime() -
+                            new Date(booking.startDate).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        ) + 1
+                      )
+                    : null);
 
-              const statusStr = booking.status || "pending";
+                const rawTotal =
+                  booking.pricing?.total ?? booking.totalPrice ?? booking.pricePerDayInUSD;
+                const priceStr =
+                  rawTotal !== undefined ? `$${formatMoney(rawTotal)}` : "N/A";
+                const dailyRate = chairObj?.pricePerDayInUSD ?? booking.pricePerDayInUSD;
 
-              const targetChairId =
-                chairObj?._id ||
-                (chairObj as { id?: string })?.id ||
-                (typeof booking.chair === "string" ? booking.chair : null) ||
-                (booking as { chairId?: string }).chairId ||
-                booking._id;
+                const statusStr = booking.status || "pending";
+                const paymentStr = booking.paymentStatus || "unpaid";
 
-              return (
-                <Link
-                  key={booking._id}
-                  href={`/workspaces/${targetChairId}`}
-                  className="bg-card border border-border rounded-lg p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-[#D99722]/60 hover:shadow-md transition-all group cursor-pointer block"
-                >
-                  {/* Left Side: Thumbnail & Title */}
-                  <div className="flex items-center gap-4 sm:gap-5">
-                    <div className="relative w-20 h-14 sm:w-24 sm:h-16 rounded-xl overflow-hidden bg-accent shrink-0 border border-border">
-                      <ChairImage
-                        src={img}
-                        alt={title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                return (
+                  <div
+                    key={booking._id}
+                    className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 shadow-2xs hover:border-[#D99722]/60 hover:shadow-md transition-all group"
+                  >
+                    {/* Top Body: Thumbnail + Info */}
+                    <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+                      <div className="relative w-full h-44 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-accent shrink-0 border border-border">
+                        <ChairImage
+                          src={img}
+                          alt={title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2">
+                        <div className="space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-bold text-base sm:text-lg text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-1">
+                              {title}
+                            </h3>
+                            <span className="text-[10px] font-mono bg-accent px-2 py-0.5 rounded border border-border text-muted-foreground shrink-0">
+                              #{booking.uid || booking._id?.slice(-6)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Building2 className="w-3.5 h-3.5 text-[#D99722] shrink-0" />
+                            <span className="font-medium text-foreground truncate">{salonName}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{locationText}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+                          <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                            <Calendar className="w-3.5 h-3.5 text-[#D99722] shrink-0" />
+                            <span>{dateRangeStr}</span>
+                            {daysCount && (
+                              <span className="text-[11px] text-muted-foreground">
+                                ({daysCount} {daysCount === 1 ? "day" : "days"})
+                              </span>
+                            )}
+                          </span>
+
+                          <div className="text-right">
+                            <span className="font-extrabold text-base sm:text-lg text-[#D99722]">
+                              {priceStr}
+                            </span>
+                            {dailyRate !== undefined && (
+                              <span className="text-[11px] text-muted-foreground ml-1">
+                                (${formatMoney(dailyRate)}/day)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-0.5 sm:space-y-1">
-                      <h3 className="font-bold text-base sm:text-lg text-foreground leading-tight group-hover:text-primary transition-colors">
-                        {title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground font-normal">
-                        {salonName} · {dateRangeStr}
-                      </p>
+                    {/* Footer: Status Badges + Actions */}
+                    <div className="pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${getAppointmentStatusBadgeStyle(
+                            statusStr
+                          )}`}
+                        >
+                          {formatAppointmentStatus(statusStr)}
+                        </span>
+
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-bold capitalize ${getPaymentBadgeStyle(
+                            paymentStr
+                          )}`}
+                        >
+                          {paymentStr.toLowerCase() === "paid" ? (
+                            <CheckCircle2 className="w-3 h-3 shrink-0" />
+                          ) : (
+                            <AlertCircle className="w-3 h-3 shrink-0" />
+                          )}
+                          {paymentStr}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRental(booking)}
+                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Details</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Right Side: Status Badge & Total Price */}
-                  <div className="text-right space-y-1 sm:space-y-2">
-                    <div>
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize border ${statusStr.toLowerCase() === "confirmed"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                            : statusStr.toLowerCase() === "pending"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                              : "bg-destructive/10 text-destructive border-destructive/20"
-                          }`}
-                      >
-                        {statusStr}
-                      </span>
-                    </div>
-                    <div className="font-bold text-lg sm:text-xl text-foreground">
-                      {priceStr}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
+                );
+              })}
+            </div>
           ) : (
-            <div className="bg-accent/60 border border-border rounded-lg p-12 text-center text-muted-foreground space-y-2">
+            <div className="bg-accent/60 border border-border rounded-2xl p-12 text-center text-muted-foreground space-y-3">
+              <Armchair className="w-10 h-10 text-muted-foreground mx-auto" />
               <p className="font-bold text-lg text-foreground">No active workspace bookings found.</p>
-              <p className="text-xs">Browse workspaces and select dates to book a station.</p>
+              <p className="text-xs max-w-sm mx-auto">
+                Browse available salon workspaces and select dates to book a station.
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveTab("browse")}
+                className="px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold cursor-pointer transition-colors"
+              >
+                Browse Workspaces
+              </button>
             </div>
           )}
         </div>
       )}
 
-      {/* Book Work Space Dialog Modal */}
+      {/* Workspace Booking View Details Modal */}
+      {selectedRental && (() => {
+        const activeRental: BookingRecord = singleRentalRes?.data
+          ? { ...selectedRental, ...singleRentalRes.data }
+          : selectedRental;
+        const chairObj = typeof activeRental.chair === "object" ? activeRental.chair : null;
+        const salonObj = typeof activeRental.salon === "object" ? activeRental.salon : null;
+        const chairName = chairObj?.name || salonObj?.name || "Workspace";
+        const chairImg = chairObj?.photo || salonObj?.photos?.[0] || salonObj?.logo || "";
+        const salonName = salonObj?.name || "Salon Studio";
+        const salonAddress = formatSalonAddress(salonObj?.address);
+        const salonPhone = formatPhoneStr(salonObj?.phone);
+        const targetChairId =
+          chairObj?._id ||
+          (typeof activeRental.chair === "string" ? activeRental.chair : null) ||
+          activeRental._id;
+
+        const daysCount =
+          activeRental.durationInDays ||
+          (activeRental.startDate && activeRental.endDate
+            ? Math.max(
+                1,
+                Math.round(
+                  (new Date(activeRental.endDate).getTime() -
+                    new Date(activeRental.startDate).getTime()) /
+                    (1000 * 60 * 60 * 24)
+                ) + 1
+              )
+            : 1);
+
+        const dailyRate = chairObj?.pricePerDayInUSD ?? activeRental.pricePerDayInUSD ?? 0;
+        const computedSubtotal = dailyRate * daysCount;
+        const subtotal = activeRental.pricing?.subtotal ?? computedSubtotal;
+        const fee = activeRental.pricing?.platformFee ?? activeRental.pricing?.serviceFee;
+        const discount = activeRental.pricing?.discount ?? 0;
+        const total = activeRental.pricing?.total ?? activeRental.totalPrice ?? subtotal;
+        const transactionRef =
+          typeof activeRental.transaction === "object"
+            ? activeRental.transaction?.uid || activeRental.transaction?.transactionId || activeRental.transaction?._id
+            : activeRental.transaction;
+
+        const formatFullDate = (d?: string) => {
+          if (!d) return "N/A";
+          try {
+            return new Date(d).toLocaleDateString("en-US", {
+              timeZone: "UTC",
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+          } catch {
+            return d;
+          }
+        };
+
+        const handleCancelRental = async () => {
+          if (!confirm("Are you sure you want to cancel this workspace booking request?")) return;
+          try {
+            setIsCancellingRental(true);
+            await updateChairRental({
+              chairRentalId: activeRental._id,
+              id: activeRental._id,
+              data: { status: "cancelled" },
+              status: "cancelled",
+            }).unwrap();
+            toast.success("Workspace booking cancelled successfully.");
+            setSelectedRental(null);
+            refetchMyRentals();
+          } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to cancel workspace booking.");
+          } finally {
+            setIsCancellingRental(false);
+          }
+        };
+
+        return (
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => setSelectedRental(null)}
+          >
+            <div
+              className="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh] text-card-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Sticky Header */}
+              <div className="bg-accent/80 px-6 py-4 border-b border-border flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                    <Armchair className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-base sm:text-lg text-foreground">
+                        Workspace Booking Details
+                      </h3>
+                      {isSingleRentalFetching && (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground font-mono">
+                      Ref: {activeRental.uid || activeRental._id}
+                      {activeRental.createdAt ? ` · Booked ${formatFullDate(activeRental.createdAt)}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRental(null)}
+                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="p-6 space-y-5 overflow-y-auto flex-1">
+                {/* Status Strip */}
+                <div className="flex items-center justify-between p-4 rounded-xl bg-accent/50 border border-border flex-wrap gap-3">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground font-medium">Booking Status:</span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getAppointmentStatusBadgeStyle(
+                          activeRental.status
+                        )}`}
+                      >
+                        {formatAppointmentStatus(activeRental.status)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground font-medium">Payment:</span>
+                      <span
+                        className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full capitalize ${getPaymentBadgeStyle(
+                          activeRental.paymentStatus
+                        )}`}
+                      >
+                        {(activeRental.paymentStatus || "unpaid").toLowerCase() === "paid" ? (
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5" />
+                        )}
+                        {activeRental.paymentStatus || "unpaid"}
+                      </span>
+                    </div>
+                  </div>
+                  {transactionRef && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-mono">
+                      <CreditCard className="w-3.5 h-3.5 text-primary" />
+                      <span>Txn: {String(transactionRef)}</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Chair / Workspace Card */}
+                <div className="p-4 rounded-xl bg-accent/30 border border-border/70 flex flex-col sm:flex-row gap-4">
+                  <div className="relative w-full h-40 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-accent border border-border shrink-0">
+                    <ChairImage src={chairImg} alt={chairName} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <h4 className="font-bold text-base text-foreground">{chairName}</h4>
+                        {chairObj?.uid && (
+                          <span className="text-[11px] font-mono text-muted-foreground">
+                            Chair ID: {chairObj.uid}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-extrabold text-[#D99722]">
+                        ${formatMoney(dailyRate)}/day
+                      </span>
+                    </div>
+                    {chairObj?.location && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span>{chairObj.location}</span>
+                      </p>
+                    )}
+                    {chairObj?.description && (
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                        {chairObj.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Host Salon & Schedule Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Host Salon */}
+                  <div className="p-4 rounded-xl bg-accent/30 border border-border/70 space-y-2.5">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Host Salon
+                    </p>
+                    <div className="flex items-start gap-3">
+                      {salonObj?.logo ? (
+                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-accent border border-border shrink-0">
+                          <Image
+                            src={salonObj.logo}
+                            alt={salonName}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0 space-y-1 text-xs">
+                        <p className="font-bold text-sm text-foreground">{salonName}</p>
+                        {salonObj?.businessType && (
+                          <p className="text-muted-foreground">{salonObj.businessType}</p>
+                        )}
+                        {salonAddress && (
+                          <p className="text-muted-foreground flex items-start gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                            <span>{salonAddress}</span>
+                          </p>
+                        )}
+                        {salonObj?.email && (
+                          <p className="text-muted-foreground flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="truncate">{salonObj.email}</span>
+                          </p>
+                        )}
+                        {salonPhone && (
+                          <p className="text-muted-foreground flex items-center gap-1">
+                            <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span>{salonPhone}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Schedule */}
+                  <div className="p-4 rounded-xl bg-accent/30 border border-border/70 space-y-2.5">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Rental Schedule
+                    </p>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <div>
+                          <span className="text-muted-foreground">Start Date: </span>
+                          <span className="font-semibold text-foreground">
+                            {formatFullDate(activeRental.startDate)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <div>
+                          <span className="text-muted-foreground">End Date: </span>
+                          <span className="font-semibold text-foreground">
+                            {formatFullDate(activeRental.endDate)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <div>
+                          <span className="text-muted-foreground">Duration: </span>
+                          <span className="font-bold text-foreground">
+                            {daysCount} {daysCount === 1 ? "Day" : "Days"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pricing Breakdown */}
+                <div className="p-4 rounded-xl bg-accent/40 border border-border/70 space-y-2 text-xs">
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pb-1">
+                    Payment Breakdown
+                  </p>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>
+                      Daily Rate (${formatMoney(dailyRate)} × {daysCount}{" "}
+                      {daysCount === 1 ? "day" : "days"})
+                    </span>
+                    <span className="font-semibold text-foreground">${formatMoney(subtotal)}</span>
+                  </div>
+                  {Number(discount) > 0 && (
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                      <span>Discount</span>
+                      <span className="font-semibold">-${formatMoney(discount)}</span>
+                    </div>
+                  )}
+                  {fee !== undefined && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Platform Fee</span>
+                      <span className="font-semibold text-foreground">${formatMoney(fee)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-border pt-2 flex justify-between font-bold text-base text-foreground">
+                    <span>Total Amount</span>
+                    <span className="text-primary">${formatMoney(total)} USD</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sticky Footer */}
+              <div className="bg-accent/60 px-6 py-4 border-t border-border flex flex-wrap items-center justify-between gap-3 shrink-0">
+                {(activeRental.status || "").toLowerCase() === "pending" && (
+                  <button
+                    type="button"
+                    onClick={handleCancelRental}
+                    disabled={isCancellingRental}
+                    className="px-4 py-2 rounded-xl border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isCancellingRental ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Ban className="w-3.5 h-3.5" />
+                    )}
+                    <span>Cancel Request</span>
+                  </button>
+                )}
+
+                <div className="flex items-center gap-2 ml-auto">
+                  <Link
+                    href={`/workspaces/${targetChairId}`}
+                    className="px-4 py-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  >
+                    <span>View Workspace</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRental(null)}
+                    className="px-5 py-2 rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Book Workspace Dialog Modal */}
       {selectedChair && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-lg max-w-md w-full p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-150 space-y-5 text-foreground">

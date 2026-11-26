@@ -150,7 +150,7 @@ export default function WorkspaceDetailPage({ params }: WorkspaceDetailPageProps
         return;
       }
 
-      toast.success(res?.message || "Work space booking request sent successfully!");
+      toast.success(res?.message || "Workspace booking request sent successfully!");
       router.push("/professional/workspace");
     } catch (err: any) {
       console.error("Booking submission error:", err);
@@ -161,7 +161,7 @@ export default function WorkspaceDetailPage({ params }: WorkspaceDetailPageProps
   const handleShare = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard?.writeText(window.location.href);
-      toast.success("Work space link copied to clipboard!");
+      toast.success("Workspace link copied to clipboard!");
     }
   };
 
@@ -198,7 +198,7 @@ export default function WorkspaceDetailPage({ params }: WorkspaceDetailPageProps
           <XCircle className="w-6 h-6" />
         </div>
         <h2 className="text-2xl font-bold text-foreground">
-          Work Space Not Found
+          Workspace Not Found
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
           {(chairError as any)?.data?.message ||
@@ -216,7 +216,7 @@ export default function WorkspaceDetailPage({ params }: WorkspaceDetailPageProps
             href="/professional/workspace"
             className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
           >
-            Browse Work Spaces
+            Browse Workspaces
           </Link>
         </div>
       </div>
@@ -268,7 +268,7 @@ export default function WorkspaceDetailPage({ params }: WorkspaceDetailPageProps
             className="flex items-center gap-1 hover:text-foreground transition-colors font-medium cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>Work Spaces</span>
+            <span>Workspaces</span>
           </Link>
           <span>/</span>
           <span className="text-foreground font-semibold truncate max-w-[200px] sm:max-w-xs">
@@ -756,7 +756,7 @@ export default function WorkspaceDetailPage({ params }: WorkspaceDetailPageProps
                   </>
                 ) : (
                   <>
-                    <span>Confirm &amp; Book Work Space</span>
+                    <span>Confirm &amp; Book Workspace</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

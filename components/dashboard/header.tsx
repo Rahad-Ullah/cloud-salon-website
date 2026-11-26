@@ -106,65 +106,6 @@ export default function DashboardHeader({
 
   const userImage = typeof currentUser?.image === "string" && currentUser.image.trim().length > 0 ? currentUser.image : null;
 
-  // Derive section title from pathname
-  const getPageTitle = () => {
-    const segments = pathname.split("/").filter(Boolean);
-    if (segments.length === 0 || segments[segments.length - 1] === "dashboard") {
-      return "Dashboard";
-    }
-
-    let targetSegment = segments[segments.length - 1];
-
-    // Check if the last segment is an ID (MongoDB 24-hex ObjectId, UUID, numeric or mixed hash)
-    const isId =
-      /^[a-f0-9]{24}$/i.test(targetSegment) ||
-      /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(targetSegment) ||
-      /^\d+$/.test(targetSegment) ||
-      (targetSegment.length >= 12 && /\d/.test(targetSegment));
-
-    if (isId && segments.length > 1) {
-      targetSegment = segments[segments.length - 2];
-    }
-
-    if (
-      targetSegment === "workspace" ||
-      targetSegment === "work-space" ||
-      targetSegment === "chairs-space" ||
-      targetSegment === "my-chair-rentals"
-    ) {
-      return "Work Space";
-    }
-    if (targetSegment === "bookings" || targetSegment === "appointments") {
-      return "Bookings";
-    }
-    if (targetSegment === "services") {
-      return "Services";
-    }
-    if (targetSegment === "messages" || targetSegment === "chats") {
-      return "Messages";
-    }
-    if (targetSegment === "calendar") {
-      return "Calendar";
-    }
-    if (targetSegment === "portfolio") {
-      return "Portfolio";
-    }
-    if (targetSegment === "reviews") {
-      return "Reviews";
-    }
-    if (targetSegment === "settings") {
-      return "Settings";
-    }
-    if (targetSegment === "notifications") {
-      return "Notifications";
-    }
-
-    return (
-      targetSegment.charAt(0).toUpperCase() +
-      targetSegment.slice(1).replace(/-/g, " ")
-    );
-  };
-
   const displayName = currentUser?.firstName
     ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim()
     : storedDisplayName || currentUser?.name || (currentUser?.email?.split('@')[0] || "Business Professional");
@@ -192,7 +133,7 @@ export default function DashboardHeader({
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 sm:h-20 px-3 sm:px-6 lg:px-8 bg-background/95 backdrop-blur-md border-b border-border transition-colors duration-200">
-      {/* Left: Mobile Toggle & Page Title */}
+      {/* Left: Mobile Toggle & Role Badge */}
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         <button
           onClick={onOpenMobileMenu}
@@ -202,16 +143,11 @@ export default function DashboardHeader({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2 min-w-0">
-          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground truncate max-w-[130px] xs:max-w-[190px] sm:max-w-none">
-            {getPageTitle()}
-          </h1>
-          <span
-            className={`hidden xs:inline-flex items-center px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border shrink-0 ${roleBadgeColor}`}
-          >
-            {roleBadgeText}
-          </span>
-        </div>
+        <span
+          className={`hidden xs:inline-flex items-center px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-full border shrink-0 ${roleBadgeColor}`}
+        >
+          {roleBadgeText}
+        </span>
       </div>
 
       {/* Center: Main Navigation Links (Hidden on small laptop/tablet, shown on desktop xl+) */}
