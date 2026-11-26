@@ -68,7 +68,7 @@ export default function WorkspacesSection() {
           {activeChairs.map((item: any) => {
             const chair = item.chair || item;
             const salonObj = typeof item.salon === "object" ? item.salon : null;
-            const chairName = item.name || chair.name || "Salon Work Space";
+            const chairName = item.name || chair.name || "Salon Workspace";
             const salonName = salonObj?.name || "Salon Studio";
             const pricePerDay =
               item.pricePerDayInUSD || chair.pricePerDayInUSD || item.pricing?.total || 45;

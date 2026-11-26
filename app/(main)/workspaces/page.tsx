@@ -307,7 +307,7 @@ function WorkspacesContent() {
         return;
       }
 
-      toast.success(res?.message || "Work space booking request sent successfully!");
+      toast.success(res?.message || "Workspace booking request sent successfully!");
       setBookingSuccess(true);
       refetch();
 
@@ -472,7 +472,7 @@ function WorkspacesContent() {
             <div className="flex items-center gap-2">
               <Armchair className="w-5 h-5 text-[#D99722]" />
               <h2 className="text-base sm:text-lg font-bold text-foreground">
-                Available Work Spaces ({filteredChairs.length})
+                Available Workspaces ({filteredChairs.length})
               </h2>
             </div>
 
@@ -544,7 +544,7 @@ function WorkspacesContent() {
               const isFav = favorites.includes(item._id);
               const chair = item.chair || item;
               const salonObj = typeof item.salon === "object" ? item.salon : null;
-              const chairName = item.name || chair.name || "Salon Work Space";
+              const chairName = item.name || chair.name || "Salon Workspace";
               const salonName = salonObj?.name || "Salon Studio";
               const category = salonObj?.businessType || "Hair & Beauty";
               const rating = salonObj?.avgRating || 5.0;
@@ -664,13 +664,13 @@ function WorkspacesContent() {
                       </div>
                     </div>
 
-                    {/* Book Work Space Action Button */}
+                    {/* Book Workspace Action Button */}
                     <div className="pt-2">
                       <Link
                         href={`/workspaces/${item._id}`}
                         className="w-full block text-center bg-[#D99722] hover:bg-[#C2841B] active:scale-[0.98] text-white py-2.5 rounded-sm font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-xs"
                       >
-                        Book Work Space
+                        Book Workspace
                       </Link>
                     </div>
                   </div>
@@ -716,7 +716,7 @@ function WorkspacesContent() {
         />
       </div>
 
-      {/* Book Work Space Dialog Modal */}
+      {/* Book Workspace Dialog Modal */}
       {selectedChair && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-lg max-w-md w-full p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-150 space-y-5 text-foreground">

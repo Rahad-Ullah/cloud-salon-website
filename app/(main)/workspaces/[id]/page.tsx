@@ -275,7 +275,7 @@ export default function WorkspaceDetailPage({ params }: PageProps) {
         return;
       }
 
-      toast.success(res?.message || "Work space booking request sent successfully!");
+      toast.success(res?.message || "Workspace booking request sent successfully!");
       setBookingSuccess(true);
       refetchRental();
       refetchChair();
@@ -879,7 +879,7 @@ export default function WorkspaceDetailPage({ params }: PageProps) {
                       </>
                     ) : (
                       <>
-                        <span>Confirm &amp; Book Work Space</span>
+                        <span>Confirm &amp; Book Workspace</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
